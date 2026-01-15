@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { format, addWeeks, startOfWeek, addDays, parseISO } from "date-fns";
 import { ja } from "date-fns/locale/ja";
 import {
@@ -26,11 +26,7 @@ export default function BookingCalendar({ userId }: BookingCalendarProps) {
   const weekStart = startOfWeek(currentWeek, { weekStartsOn: 0 });
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
 
-  useEffect(() => {
-    loadReservations();
-  }, [currentWeek]);
-
-  const loadReservations = async () => {
+  const loadReservations = useCallback(async () => {
     const dates = weekDays.map((d) => format(d, "yyyy-MM-dd"));
     const allReservations: Record<string, Reservation[]> = {};
 
@@ -45,7 +41,11 @@ export default function BookingCalendar({ userId }: BookingCalendarProps) {
     }
 
     setReservations(allReservations);
-  };
+  }, [weekDays]);
+
+  useEffect(() => {
+    loadReservations();
+  }, [loadReservations]);
 
   const handleTimeSlotClick = async (date: string, time: string) => {
     if (!isBookableDate(date)) {
