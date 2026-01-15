@@ -1,9 +1,29 @@
 import { createClient } from "@supabase/supabase-js";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// 環境変数のチェック（ビルド時と実行時の両方で）
+if (typeof window === "undefined") {
+  // サーバーサイド（ビルド時）のチェック
+  if (!supabaseUrl || !supabaseAnonKey) {
+    console.warn(
+      "Supabase environment variables are missing. Please set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in Vercel."
+    );
+  }
+}
+
+// クライアントサイドでのチェック
+if (typeof window !== "undefined" && (!supabaseUrl || !supabaseAnonKey)) {
+  throw new Error(
+    "Missing Supabase environment variables. Please check NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are set."
+  );
+}
+
+export const supabase = createClient(
+  supabaseUrl || "https://placeholder.supabase.co",
+  supabaseAnonKey || "placeholder-key"
+);
 
 // 型定義
 export type Profile = {
