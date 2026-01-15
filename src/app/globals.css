@@ -1,0 +1,59 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Primary Colors (優先順位順) - Material Design 3 */
+  --md-sys-color-primary: #16145F;        /* Pantone 2765 - メイン */
+  --md-sys-color-primary-variant: #0067B1; /* Pantone 293 */
+  --md-sys-color-secondary: #00A5E3;       /* Pantone 7460 */
+  --md-sys-color-outline: #B6B8BA;         /* Pantone 422 */
+  
+  /* Highlight Color */
+  --md-sys-color-error: #E72241;           /* Pantone 1925 */
+  
+  /* Background & Surface */
+  --md-sys-color-background: #FFFFFF;
+  --md-sys-color-surface: #FAFAFA;
+  
+  /* Text Colors */
+  --md-sys-color-on-primary: #FFFFFF;
+  --md-sys-color-on-background: #1A1A1A;
+}
+
+body {
+  background: var(--md-sys-color-background);
+  color: var(--md-sys-color-on-background);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+/* Material Design 3 スタイルのボタン */
+.btn-primary {
+  @apply bg-primary text-on-primary px-6 py-3 rounded-full font-medium 
+         hover:bg-primary-light transition-colors duration-200
+         focus:outline-none focus:ring-2 focus:ring-primary-accent focus:ring-offset-2;
+}
+
+.btn-secondary {
+  @apply bg-primary-light text-on-primary px-6 py-3 rounded-full font-medium
+         hover:bg-primary-accent transition-colors duration-200
+         focus:outline-none focus:ring-2 focus:ring-primary-accent focus:ring-offset-2;
+}
+
+.btn-danger {
+  @apply bg-highlight text-white px-6 py-3 rounded-full font-medium
+         hover:opacity-90 transition-opacity duration-200
+         focus:outline-none focus:ring-2 focus:ring-highlight focus:ring-offset-2;
+}
+
+/* カード */
+.card {
+  @apply bg-surface rounded-2xl p-6 shadow-sm border border-outline/20;
+}
+
+/* 入力フィールド */
+.input {
+  @apply w-full px-4 py-3 border border-outline rounded-lg
+         focus:outline-none focus:ring-2 focus:ring-primary-accent focus:border-transparent
+         transition-all duration-200;
+}
