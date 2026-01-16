@@ -35,7 +35,7 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-background">
       <Header />
       <main className="max-w-6xl mx-auto px-6 py-8">
-        <div className="mb-6">
+        <div className="mb-6 text-center">
           <h2 className="text-2xl font-bold text-primary mb-2">
             予約カレンダー
           </h2>

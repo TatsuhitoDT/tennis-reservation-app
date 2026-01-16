@@ -12,7 +12,7 @@ export default function Home() {
       <Header />
 
       {/* メインコンテンツ */}
-      <main className="max-w-4xl mx-auto px-6 py-12">
+      <main className="max-w-4xl mx-auto px-6 py-12 text-center">
         {/* ヒーローセクション */}
         <section className="text-center mb-16">
           <h2 className="text-4xl font-bold text-primary mb-4">
@@ -33,7 +33,7 @@ export default function Home() {
         </section>
 
         {/* 特徴セクション */}
-        <section className="grid md:grid-cols-3 gap-6 mb-16">
+        <section className="grid md:grid-cols-3 gap-6 mb-16 text-left">
           <div className="card text-center">
             <div className="w-16 h-16 bg-primary-accent/10 rounded-full flex items-center justify-center mx-auto mb-4">
               <Calendar className="w-8 h-8 text-primary-accent" />
@@ -72,7 +72,7 @@ export default function Home() {
         </section>
 
         {/* 利用ルール */}
-        <section className="card">
+        <section className="card text-left">
           <h3 className="text-xl font-bold text-primary mb-4">ご利用ルール</h3>
           <ul className="space-y-2 text-on-background/80">
             <li className="flex items-start gap-2">
