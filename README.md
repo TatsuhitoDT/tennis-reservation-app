@@ -32,8 +32,8 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
    - `../doc/02_database_setup.sql` をSupabaseのSQL Editorで実行
 
 2. **コート2面対応**（必須）
-   - `../doc/19_database_update_for_courts.sql` を実行
-   - `../doc/20_court_update_execution_guide.md` で実行手順を参照
+   - `../doc/05_database_update_for_courts.sql` を実行
+   - `../doc/15_court_update_execution_guide.md` で実行手順を参照
 
 ### 5. 開発サーバー起動
 ```bash
@@ -150,9 +150,9 @@ npm run lint
 
 詳細なドキュメントは親フォルダーの `doc/` を参照：
 
-- **デプロイガイド**: `../doc/03_vercel_deployment_guide.md`
+- **デプロイガイド**: `../doc/06_vercel_deployment_guide.md`
 - **データベースセットアップ**: `../doc/02_database_setup.sql`
-- **コート2面対応**: `../doc/19_database_update_for_courts.sql`
+- **コート2面対応**: `../doc/05_database_update_for_courts.sql`
 
 ---
 
