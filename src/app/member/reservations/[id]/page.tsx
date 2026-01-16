@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useRouter, useParams, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { type Reservation } from "@/lib/supabase";
+import { type Reservation, getCourts, type Court } from "@/lib/supabase";
 import Header from "@/components/Header";
 import { formatDate, formatTime } from "@/lib/dateUtils";
 import { Calendar, Clock, Edit, Save, X } from "lucide-react";
@@ -22,6 +22,8 @@ export default function ReservationDetailPage() {
   const [editing, setEditing] = useState(isEditMode);
   const [selectedDate, setSelectedDate] = useState<string>("");
   const [selectedTime, setSelectedTime] = useState<{ start: string; end: string } | null>(null);
+  const [selectedCourtId, setSelectedCourtId] = useState<string>("");
+  const [courts, setCourts] = useState<Court[]>([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -32,6 +34,11 @@ export default function ReservationDetailPage() {
       const data = await getReservationById(reservationId);
       setReservation(data);
       setSelectedDate(data.booking_date);
+      setSelectedCourtId(data.court_id);
+      
+      // コート一覧を読み込む
+      const courtsData = await getCourts();
+      setCourts(courtsData);
     } catch (error) {
       console.error("Failed to load reservation:", error);
       setError("予約情報の読み込みに失敗しました");
@@ -63,7 +70,7 @@ export default function ReservationDetailPage() {
   };
 
   const handleUpdate = async () => {
-    if (!reservation || !selectedTime || !user) return;
+    if (!reservation || !selectedTime || !selectedCourtId || !user) return;
 
     try {
       setSaving(true);
@@ -72,6 +79,7 @@ export default function ReservationDetailPage() {
       const { updateReservation } = await import("@/lib/supabase");
       await updateReservation(
         reservation.id,
+        selectedCourtId,
         selectedDate,
         selectedTime.start,
         selectedTime.end
@@ -146,6 +154,14 @@ export default function ReservationDetailPage() {
                 {formatDate(reservation.booking_date)}
               </span>
             </div>
+            {reservation.court && (
+              <div className="flex items-center gap-3 text-on-background/70">
+                <span className="text-sm font-medium">コート:</span>
+                <span className="text-lg font-bold text-primary">
+                  {reservation.court.display_name}
+                </span>
+              </div>
+            )}
             <div className="flex items-center gap-3 text-on-background/70">
               <Clock className="w-5 h-5" />
               <span className="text-lg">
@@ -197,10 +213,35 @@ export default function ReservationDetailPage() {
               </div>
             </div>
 
+            {/* コート選択 */}
+            {courts.length > 0 && (
+              <div className="card mb-4">
+                <label className="block text-sm font-medium text-on-background mb-2">
+                  コート選択
+                </label>
+                <div className="flex gap-2">
+                  {courts.map((court) => (
+                    <button
+                      key={court.id}
+                      onClick={() => setSelectedCourtId(court.id)}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        selectedCourtId === court.id
+                          ? "bg-primary text-on-primary"
+                          : "bg-surface text-on-background/70 hover:bg-surface/80"
+                      }`}
+                    >
+                      {court.display_name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div className="card">
               <BookingCalendar
                 userId={user?.id}
                 selectionMode={true}
+                selectedCourtId={selectedCourtId}
                 onTimeSelect={(date, start, end) => {
                   setSelectedDate(date);
                   setSelectedTime({ start, end });

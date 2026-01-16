@@ -6,21 +6,26 @@ import { ja } from "date-fns/locale/ja";
 import {
   getReservationsByDate,
   createReservation,
+  getCourts,
   type Reservation,
+  type Court,
 } from "@/lib/supabase";
 import { isBookableDate, generateTimeSlots, formatTime } from "@/lib/dateUtils";
 import { Calendar, Clock, CheckCircle, XCircle } from "lucide-react";
 
 interface BookingCalendarProps {
   userId: string;
-  onTimeSelect?: (date: string, startTime: string, endTime: string) => void;
+  onTimeSelect?: (date: string, startTime: string, endTime: string, courtId?: string) => void;
   selectionMode?: boolean; // trueの場合、予約作成せずに選択のみ
+  selectedCourtId?: string; // 選択中のコートID（選択モード時）
 }
 
-export default function BookingCalendar({ userId, onTimeSelect, selectionMode = false }: BookingCalendarProps) {
+export default function BookingCalendar({ userId, onTimeSelect, selectionMode = false, selectedCourtId }: BookingCalendarProps) {
   const [currentWeek, setCurrentWeek] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
+  const [selectedCourt, setSelectedCourt] = useState<string>("");
+  const [courts, setCourts] = useState<Court[]>([]);
   const [reservations, setReservations] = useState<Record<string, Reservation[]>>({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -28,13 +33,33 @@ export default function BookingCalendar({ userId, onTimeSelect, selectionMode = 
   const weekStart = startOfWeek(currentWeek, { weekStartsOn: 0 });
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
 
+  // コート一覧を読み込む
+  useEffect(() => {
+    const loadCourts = async () => {
+      try {
+        const courtsData = await getCourts();
+        setCourts(courtsData);
+        if (courtsData.length > 0) {
+          // 選択モードの場合はselectedCourtIdを使用、それ以外は最初のコートを選択
+          const initialCourtId = selectedCourtId || courtsData[0].id;
+          setSelectedCourt(initialCourtId);
+        }
+      } catch (err) {
+        console.error("Failed to load courts:", err);
+      }
+    };
+    loadCourts();
+  }, [selectedCourtId]);
+
   const loadReservations = useCallback(async () => {
+    if (!selectedCourt) return;
+    
     const dates = weekDays.map((d) => format(d, "yyyy-MM-dd"));
     const allReservations: Record<string, Reservation[]> = {};
 
     for (const date of dates) {
       try {
-        const res = await getReservationsByDate(date);
+        const res = await getReservationsByDate(date, selectedCourt);
         allReservations[date] = res;
       } catch (err) {
         console.error(`Failed to load reservations for ${date}:`, err);
@@ -43,7 +68,7 @@ export default function BookingCalendar({ userId, onTimeSelect, selectionMode = 
     }
 
     setReservations(allReservations);
-  }, [weekDays]);
+  }, [weekDays, selectedCourt]);
 
   useEffect(() => {
     loadReservations();
@@ -55,6 +80,11 @@ export default function BookingCalendar({ userId, onTimeSelect, selectionMode = 
       return;
     }
 
+    if (!selectedCourt) {
+      setError("コートを選択してください");
+      return;
+    }
+
     setSelectedDate(date);
     setSelectedTime(time);
     setError(null);
@@ -62,7 +92,7 @@ export default function BookingCalendar({ userId, onTimeSelect, selectionMode = 
     // 選択モードの場合、コールバックを呼び出すだけ
     if (selectionMode && onTimeSelect) {
       const endTime = `${(parseInt(time.split(":")[0]) + 1).toString().padStart(2, "0")}:00`;
-      onTimeSelect(date, time, endTime);
+      onTimeSelect(date, time, endTime, selectedCourt);
       return;
     }
 
@@ -71,7 +101,7 @@ export default function BookingCalendar({ userId, onTimeSelect, selectionMode = 
       setLoading(true);
       const endTime = `${(parseInt(time.split(":")[0]) + 1).toString().padStart(2, "0")}:00`;
       
-      await createReservation(userId, date, time, endTime);
+      await createReservation(userId, selectedCourt, date, time, endTime);
       
       // リロード
       await loadReservations();
@@ -95,6 +125,34 @@ export default function BookingCalendar({ userId, onTimeSelect, selectionMode = 
 
   return (
     <div className="card">
+      {/* コート選択 */}
+      {courts.length > 0 && (
+        <div className="mb-6">
+          <label className="block text-sm font-medium text-on-background mb-2">
+            コート選択
+          </label>
+          <div className="flex gap-2">
+            {courts.map((court) => (
+              <button
+                key={court.id}
+                onClick={() => {
+                  setSelectedCourt(court.id);
+                  setSelectedDate(null);
+                  setSelectedTime(null);
+                }}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  selectedCourt === court.id
+                    ? "bg-primary text-on-primary"
+                    : "bg-surface text-on-background/70 hover:bg-surface/80"
+                }`}
+              >
+                {court.display_name}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* 週ナビゲーション */}
       <div className="flex items-center justify-between mb-6">
         <button

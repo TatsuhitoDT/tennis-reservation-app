@@ -196,6 +196,14 @@ export default function ReservationsPage() {
                           </span>
                         )}
                       </div>
+                      {reservation.court && (
+                        <div className="flex items-center gap-3 text-on-background/70 mb-2">
+                          <span className="text-sm font-medium">コート:</span>
+                          <span className="font-bold text-primary">
+                            {reservation.court.display_name}
+                          </span>
+                        </div>
+                      )}
                       <div className="flex items-center gap-3 text-on-background/70 mb-2">
                         <Clock className="w-4 h-4" />
                         <span>
