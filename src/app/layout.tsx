@@ -13,8 +13,15 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ja">
-      <body className="antialiased min-h-screen">
-        {children}
+      <body className="antialiased min-h-screen flex flex-col">
+        <div className="flex-1">
+          {children}
+        </div>
+        <footer className="w-full py-4 px-4 text-left">
+          <p className="text-sm text-on-background/70">
+            運営会社 iPark Institute Co., Ltd.
+          </p>
+        </footer>
       </body>
     </html>
   );
