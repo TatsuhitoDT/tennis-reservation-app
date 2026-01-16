@@ -16,6 +16,7 @@ export default function AuthForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [focusedField, setFocusedField] = useState<string | null>(null);
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -140,7 +141,9 @@ export default function AuthForm() {
                   お名前 <span className="text-highlight">*</span>
                 </label>
                 <div className="relative">
-                  <UserPlus className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-outline" />
+                  {(!focusedField || focusedField !== "fullName") && fullName === "山田 太郎" && (
+                    <UserPlus className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-outline" />
+                  )}
                   <input
                     type="text"
                     value={fullName}
@@ -151,11 +154,13 @@ export default function AuthForm() {
                       setFullName(e.target.value);
                     }}
                     onFocus={(e) => {
+                      setFocusedField("fullName");
                       if (e.target.value === "山田 太郎") {
                         setFullName("");
                       }
                     }}
-                    className="input pl-10"
+                    onBlur={() => setFocusedField(null)}
+                    className={`input ${(!focusedField || focusedField !== "fullName") && fullName === "山田 太郎" ? "pl-10" : "pl-3"}`}
                     placeholder="山田 太郎"
                     required
                   />
@@ -166,7 +171,9 @@ export default function AuthForm() {
                   お名前（カナ） <span className="text-highlight">*</span>
                 </label>
                 <div className="relative">
-                  <UserPlus className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-outline" />
+                  {(!focusedField || focusedField !== "fullNameKana") && fullNameKana === "ヤマダ タロウ" && (
+                    <UserPlus className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-outline" />
+                  )}
                   <input
                     type="text"
                     value={fullNameKana}
@@ -177,11 +184,13 @@ export default function AuthForm() {
                       setFullNameKana(e.target.value);
                     }}
                     onFocus={(e) => {
+                      setFocusedField("fullNameKana");
                       if (e.target.value === "ヤマダ タロウ") {
                         setFullNameKana("");
                       }
                     }}
-                    className="input pl-10"
+                    onBlur={() => setFocusedField(null)}
+                    className={`input ${(!focusedField || focusedField !== "fullNameKana") && fullNameKana === "ヤマダ タロウ" ? "pl-10" : "pl-3"}`}
                     placeholder="ヤマダ タロウ"
                     required
                   />
@@ -192,7 +201,9 @@ export default function AuthForm() {
                   電話番号 <span className="text-highlight">*</span>
                 </label>
                 <div className="relative">
-                  <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-outline" />
+                  {(!focusedField || focusedField !== "phone") && phone === "090-1234-5678" && (
+                    <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-outline" />
+                  )}
                   <input
                     type="tel"
                     value={phone}
@@ -203,11 +214,13 @@ export default function AuthForm() {
                       setPhone(e.target.value);
                     }}
                     onFocus={(e) => {
+                      setFocusedField("phone");
                       if (e.target.value === "090-1234-5678") {
                         setPhone("");
                       }
                     }}
-                    className="input pl-10"
+                    onBlur={() => setFocusedField(null)}
+                    className={`input ${(!focusedField || focusedField !== "phone") && phone === "090-1234-5678" ? "pl-10" : "pl-3"}`}
                     placeholder="090-1234-5678"
                     required
                   />
@@ -221,12 +234,16 @@ export default function AuthForm() {
               メールアドレス
             </label>
             <div className="relative">
-              <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-outline" />
+              {(!focusedField || focusedField !== "email") && !email && (
+                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-outline" />
+              )}
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="input pl-10"
+                onFocus={() => setFocusedField("email")}
+                onBlur={() => setFocusedField(null)}
+                className={`input ${(!focusedField || focusedField !== "email") && !email ? "pl-10" : "pl-3"}`}
                 placeholder="example@company.com"
                 required
               />
@@ -238,12 +255,16 @@ export default function AuthForm() {
               パスワード
             </label>
             <div className="relative">
-              <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-outline" />
+              {(!focusedField || focusedField !== "password") && !password && (
+                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-outline" />
+              )}
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="input pl-10"
+                onFocus={() => setFocusedField("password")}
+                onBlur={() => setFocusedField(null)}
+                className={`input ${(!focusedField || focusedField !== "password") && !password ? "pl-10" : "pl-3"}`}
                 placeholder="••••••••"
                 required
                 minLength={6}
