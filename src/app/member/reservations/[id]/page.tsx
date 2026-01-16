@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter, useParams, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { type Reservation } from "@/lib/supabase";
@@ -25,18 +25,7 @@ export default function ReservationDetailPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session) {
-        router.push("/login");
-      } else {
-        setUser(session.user);
-        loadReservation();
-      }
-    });
-  }, [router, reservationId]);
-
-  const loadReservation = async () => {
+  const loadReservation = useCallback(async () => {
     try {
       setLoading(true);
       const { getReservationById } = await import("@/lib/supabase");
@@ -49,7 +38,18 @@ export default function ReservationDetailPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [reservationId]);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) {
+        router.push("/login");
+      } else {
+        setUser(session.user);
+        loadReservation();
+      }
+    });
+  }, [router, reservationId, loadReservation]);
 
   const canModify = (bookingDate: string) => {
     const date = new Date(bookingDate);
