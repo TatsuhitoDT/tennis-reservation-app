@@ -91,9 +91,13 @@ export default function MyBookingsPage() {
           <div className="space-y-4">
             {reservations.map((reservation) => {
               const reservationDate = new Date(reservation.booking_date);
+              reservationDate.setHours(0, 0, 0, 0);
               const today = new Date();
               today.setHours(0, 0, 0, 0);
-              const canCancel = reservationDate > today;
+              const tomorrow = new Date(today);
+              tomorrow.setDate(tomorrow.getDate() + 1);
+              // 前日までキャンセル可能（当日はキャンセル不可）
+              const canCancel = reservationDate > tomorrow;
 
               return (
                 <div key={reservation.id} className="card">

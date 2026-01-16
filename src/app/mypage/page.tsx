@@ -105,9 +105,13 @@ export default function MyPage() {
 
   const canModify = (bookingDate: string) => {
     const date = new Date(bookingDate);
+    date.setHours(0, 0, 0, 0);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    return date > today;
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    // 前日までキャンセル可能（当日はキャンセル不可）
+    return date > tomorrow;
   };
 
   if (loading) {
