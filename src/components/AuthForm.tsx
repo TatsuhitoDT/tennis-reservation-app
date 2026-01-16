@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { LogIn, UserPlus, Mail, Lock } from "lucide-react";
+import { LogIn, UserPlus, Mail, Lock, Phone } from "lucide-react";
 
 type AuthMode = "login" | "signup";
 
@@ -11,6 +11,8 @@ export default function AuthForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
+  const [fullNameKana, setFullNameKana] = useState("");
+  const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
@@ -29,6 +31,8 @@ export default function AuthForm() {
           options: {
             data: {
               full_name: fullName,
+              full_name_kana: fullNameKana,
+              phone: phone,
             },
           },
         });
@@ -36,6 +40,36 @@ export default function AuthForm() {
         if (signUpError) throw signUpError;
 
         if (data.user) {
+          // プロフィールが作成されているか確認し、なければ作成
+          try {
+            const { data: profileData, error: profileError } = await supabase
+              .from("profiles")
+              .select("id")
+              .eq("id", data.user.id)
+              .single();
+
+            // プロフィールが存在しない場合は作成
+            if (profileError || !profileData) {
+              const { error: insertError } = await supabase
+                .from("profiles")
+                .insert({
+                  id: data.user.id,
+                  full_name: fullName,
+                  full_name_kana: fullNameKana,
+                  email: email,
+                  phone: phone,
+                });
+
+              if (insertError) {
+                console.error("プロフィール作成エラー:", insertError);
+                // エラーがあっても続行（トリガーが後で作成する可能性がある）
+              }
+            }
+          } catch (err) {
+            console.error("プロフィール確認エラー:", err);
+            // エラーがあっても続行
+          }
+
           setMessage("アカウントを作成しました。メールを確認してください。");
         }
       } else {
@@ -94,22 +128,56 @@ export default function AuthForm() {
 
         <form onSubmit={handleAuth} className="space-y-4">
           {mode === "signup" && (
-            <div>
-              <label className="block text-sm font-medium text-on-background mb-2">
-                お名前
-              </label>
-              <div className="relative">
-                <UserPlus className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-outline" />
-                <input
-                  type="text"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  className="input pl-10"
-                  placeholder="山田 太郎"
-                  required
-                />
+            <>
+              <div>
+                <label className="block text-sm font-medium text-on-background mb-2">
+                  お名前 <span className="text-highlight">*</span>
+                </label>
+                <div className="relative">
+                  <UserPlus className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-outline" />
+                  <input
+                    type="text"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    className="input pl-10"
+                    placeholder="山田 太郎"
+                    required
+                  />
+                </div>
               </div>
-            </div>
+              <div>
+                <label className="block text-sm font-medium text-on-background mb-2">
+                  お名前（カナ） <span className="text-highlight">*</span>
+                </label>
+                <div className="relative">
+                  <UserPlus className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-outline" />
+                  <input
+                    type="text"
+                    value={fullNameKana}
+                    onChange={(e) => setFullNameKana(e.target.value)}
+                    className="input pl-10"
+                    placeholder="ヤマダ タロウ"
+                    required
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-on-background mb-2">
+                  電話番号 <span className="text-highlight">*</span>
+                </label>
+                <div className="relative">
+                  <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-outline" />
+                  <input
+                    type="tel"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    className="input pl-10"
+                    placeholder="090-1234-5678"
+                    required
+                  />
+                </div>
+              </div>
+            </>
           )}
 
           <div>

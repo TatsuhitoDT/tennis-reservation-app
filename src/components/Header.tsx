@@ -35,11 +35,18 @@ export default function Header() {
         {user && (
           <div className="flex items-center gap-4">
             <button
-              onClick={() => router.push("/my-bookings")}
+              onClick={() => router.push("/mypage")}
               className="flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-primary-light transition-colors text-sm"
             >
               <User className="w-4 h-4" />
-              マイ予約
+              マイページ
+            </button>
+            <button
+              onClick={() => router.push("/dashboard")}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-primary-light transition-colors text-sm"
+            >
+              <Calendar className="w-4 h-4" />
+              予約
             </button>
             <button
               onClick={handleLogout}

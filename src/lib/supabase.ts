@@ -29,7 +29,9 @@ export const supabase = createClient(
 export type Profile = {
   id: string;
   full_name: string | null;
+  full_name_kana?: string | null;
   email: string | null;
+  phone?: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -40,6 +42,8 @@ export type Reservation = {
   booking_date: string;
   start_time: string;
   end_time: string;
+  contact_notes?: string | null;
+  reservation_number?: string | null;
   created_at: string;
 };
 
@@ -99,4 +103,86 @@ export async function getUserReservations(userId: string) {
 
   if (error) throw error;
   return data as Reservation[];
+}
+
+// ユーザーの全予約取得（過去含む）
+export async function getAllUserReservations(userId: string) {
+  const { data, error } = await supabase
+    .from("reservations")
+    .select("*")
+    .eq("user_id", userId)
+    .order("booking_date", { ascending: false })
+    .order("start_time", { ascending: false });
+
+  if (error) throw error;
+  return data as Reservation[];
+}
+
+// 予約取得（ID指定）
+export async function getReservationById(reservationId: string) {
+  const { data, error } = await supabase
+    .from("reservations")
+    .select("*")
+    .eq("id", reservationId)
+    .single();
+
+  if (error) throw error;
+  return data as Reservation;
+}
+
+// 予約更新
+export async function updateReservation(
+  reservationId: string,
+  bookingDate: string,
+  startTime: string,
+  endTime: string
+) {
+  const { data, error } = await supabase
+    .from("reservations")
+    .update({
+      booking_date: bookingDate,
+      start_time: startTime,
+      end_time: endTime,
+    })
+    .eq("id", reservationId)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data as Reservation;
+}
+
+// プロフィール取得
+export async function getProfile(userId: string) {
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("id", userId)
+    .single();
+
+  if (error) throw error;
+  return data as Profile;
+}
+
+// プロフィール更新
+export async function updateProfile(
+  userId: string,
+  updates: {
+    full_name?: string;
+    full_name_kana?: string;
+    phone?: string;
+  }
+) {
+  const { data, error } = await supabase
+    .from("profiles")
+    .update({
+      ...updates,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", userId)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data as Profile;
 }

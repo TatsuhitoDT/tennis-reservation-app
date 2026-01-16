@@ -13,9 +13,11 @@ import { Calendar, Clock, CheckCircle, XCircle } from "lucide-react";
 
 interface BookingCalendarProps {
   userId: string;
+  onTimeSelect?: (date: string, startTime: string, endTime: string) => void;
+  selectionMode?: boolean; // trueの場合、予約作成せずに選択のみ
 }
 
-export default function BookingCalendar({ userId }: BookingCalendarProps) {
+export default function BookingCalendar({ userId, onTimeSelect, selectionMode = false }: BookingCalendarProps) {
   const [currentWeek, setCurrentWeek] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
@@ -57,7 +59,14 @@ export default function BookingCalendar({ userId }: BookingCalendarProps) {
     setSelectedTime(time);
     setError(null);
 
-    // 予約作成
+    // 選択モードの場合、コールバックを呼び出すだけ
+    if (selectionMode && onTimeSelect) {
+      const endTime = `${(parseInt(time.split(":")[0]) + 1).toString().padStart(2, "0")}:00`;
+      onTimeSelect(date, time, endTime);
+      return;
+    }
+
+    // 予約作成モード
     try {
       setLoading(true);
       const endTime = `${(parseInt(time.split(":")[0]) + 1).toString().padStart(2, "0")}:00`;
