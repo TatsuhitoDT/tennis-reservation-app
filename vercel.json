@@ -1,12 +1,4 @@
 {
-  "buildCommand": "npm run build",
-  "devCommand": "npm run dev",
-  "installCommand": "npm install",
   "framework": "nextjs",
-  "regions": ["nrt1"],
-  "functions": {
-    "app/**": {
-      "maxDuration": 10
-    }
-  }
+  "regions": ["nrt1"]
 }
