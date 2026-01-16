@@ -39,7 +39,7 @@ export default function Header() {
         {/* ロゴとログアウト */}
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
-            <div className="relative w-10 h-10">
+            <div className="relative w-32 h-16">
               <Image
                 src="/ipark_logo.png"
                 alt="iPark Logo"
