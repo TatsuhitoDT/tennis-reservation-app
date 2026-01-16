@@ -290,24 +290,23 @@ export default function MyPage() {
                       <span className="text-sm text-on-background/60">氏名:</span>
                       <p className="font-medium text-lg">{profile.full_name || "未設定"}</p>
                     </div>
-                    {profile.full_name_kana && (
-                      <div>
-                        <span className="text-sm text-on-background/60">氏名（カナ）:</span>
-                        <p className="font-medium">{profile.full_name_kana}</p>
-                      </div>
-                    )}
+                    <div>
+                      <span className="text-sm text-on-background/60">氏名（カナ）:</span>
+                      <p className="font-medium">{profile.full_name_kana || "未設定"}</p>
+                    </div>
                     {profile.email && (
                       <div>
                         <span className="text-sm text-on-background/60">メールアドレス:</span>
                         <p className="font-medium">{profile.email}</p>
                       </div>
                     )}
-                    {profile.phone && (
-                      <div>
-                        <span className="text-sm text-on-background/60">電話番号:</span>
-                        <p className="font-medium">{profile.phone}</p>
-                      </div>
-                    )}
+                    <div>
+                      <span className="text-sm text-on-background/60 flex items-center gap-2">
+                        <Phone className="w-4 h-4" />
+                        電話番号:
+                      </span>
+                      <p className="font-medium">{profile.phone || "未設定"}</p>
+                    </div>
                   </>
                 )}
               </div>
