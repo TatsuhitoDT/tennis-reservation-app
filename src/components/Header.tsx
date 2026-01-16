@@ -37,27 +37,27 @@ export default function Header() {
   };
 
   return (
-    <header className="bg-white text-on-background shadow-lg border-b border-outline/20">
+    <header className="bg-primary-accent text-white shadow-lg border-b border-primary-accent/20">
       <div className="max-w-6xl mx-auto px-6 py-4">
         {/* ロゴとログアウト */}
         <div className="flex items-center justify-center mb-4 relative">
           <div className="flex items-center gap-3">
             <div className="relative w-32 h-16">
               <Image
-                src="/ipark_logo.png"
+                src="/logo-white.svg"
                 alt="iPark Logo"
                 fill
                 className="object-contain"
                 priority
               />
             </div>
-            <h1 className="text-xl font-bold text-primary">テニスコート予約</h1>
+            <h1 className="text-xl font-bold text-white">テニスコート予約</h1>
           </div>
           
           {user && (
             <button
               onClick={handleLogout}
-              className="absolute right-0 flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-on-primary hover:bg-primary-light transition-colors text-sm"
+              className="absolute right-0 flex items-center gap-2 px-4 py-2 rounded-lg bg-white/20 text-white hover:bg-white/30 transition-colors text-sm backdrop-blur-sm"
             >
               <LogOut className="w-4 h-4" />
               ログアウト
@@ -68,13 +68,13 @@ export default function Header() {
 
         {/* タブナビゲーション */}
         {user && (
-          <nav className="flex gap-2 border-b border-outline/20 justify-center">
+          <nav className="flex gap-2 border-b border-white/20 justify-center">
             <button
               onClick={() => router.push("/")}
               className={`px-6 py-3 font-medium transition-colors border-b-2 ${
                 isActive("/")
-                  ? "border-primary text-primary"
-                  : "border-transparent text-on-background/70 hover:text-primary"
+                  ? "border-white text-white"
+                  : "border-transparent text-white/70 hover:text-white"
               }`}
             >
               <div className="flex items-center gap-2">
@@ -86,8 +86,8 @@ export default function Header() {
               onClick={() => router.push("/dashboard")}
               className={`px-6 py-3 font-medium transition-colors border-b-2 ${
                 isActive("/dashboard")
-                  ? "border-primary text-primary"
-                  : "border-transparent text-on-background/70 hover:text-primary"
+                  ? "border-white text-white"
+                  : "border-transparent text-white/70 hover:text-white"
               }`}
             >
               <div className="flex items-center gap-2">
@@ -99,8 +99,8 @@ export default function Header() {
               onClick={() => router.push("/mypage")}
               className={`px-6 py-3 font-medium transition-colors border-b-2 ${
                 isActive("/mypage")
-                  ? "border-primary text-primary"
-                  : "border-transparent text-on-background/70 hover:text-primary"
+                  ? "border-white text-white"
+                  : "border-transparent text-white/70 hover:text-white"
               }`}
             >
               <div className="flex items-center gap-2">
