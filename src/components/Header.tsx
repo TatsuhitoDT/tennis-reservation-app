@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { Calendar, LogOut, User, Home } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useRouter, usePathname } from "next/navigation";
@@ -38,7 +39,15 @@ export default function Header() {
         {/* ロゴとログアウト */}
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
-            <Calendar className="w-8 h-8" />
+            <div className="relative w-10 h-10">
+              <Image
+                src="/ipark_logo.png"
+                alt="iPark Logo"
+                fill
+                className="object-contain"
+                priority
+              />
+            </div>
             <h1 className="text-xl font-bold">テニスコート予約</h1>
           </div>
 
