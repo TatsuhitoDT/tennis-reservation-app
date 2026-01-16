@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { LogIn, UserPlus, Mail, Lock, Phone } from "lucide-react";
+import Link from "next/link";
 
 type AuthMode = "login" | "signup";
 
@@ -17,6 +18,7 @@ export default function AuthForm() {
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [focusedField, setFocusedField] = useState<string | null>(null);
+  const [privacyAccepted, setPrivacyAccepted] = useState(false);
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,6 +28,11 @@ export default function AuthForm() {
 
     try {
       if (mode === "signup") {
+        if (!privacyAccepted) {
+          setError("プライバシーポリシーへの同意が必要です");
+          setLoading(false);
+          return;
+        }
         const { data, error: signUpError } = await supabase.auth.signUp({
           email,
           password,
@@ -121,6 +128,7 @@ export default function AuthForm() {
               setFullName("山田 太郎");
               setFullNameKana("ヤマダ タロウ");
               setPhone("090-1234-5678");
+              setPrivacyAccepted(false);
             }}
             className={`flex-1 py-2 px-4 rounded-lg font-medium transition-colors ${
               mode === "signup"
@@ -271,6 +279,25 @@ export default function AuthForm() {
               />
             </div>
           </div>
+
+          {mode === "signup" && (
+            <div className="flex items-start gap-2">
+              <input
+                type="checkbox"
+                id="privacy-accept"
+                checked={privacyAccepted}
+                onChange={(e) => setPrivacyAccepted(e.target.checked)}
+                className="mt-1 w-4 h-4 text-primary-accent border-outline rounded focus:ring-primary-accent focus:ring-2"
+                required
+              />
+              <label htmlFor="privacy-accept" className="text-sm text-on-background/80 cursor-pointer">
+                <Link href="/privacy-policy" target="_blank" className="text-primary-accent hover:underline">
+                  プライバシーポリシー
+                </Link>
+                に同意します <span className="text-highlight">*</span>
+              </label>
+            </div>
+          )}
 
           {error && (
             <div className="bg-highlight/10 border border-highlight text-highlight px-4 py-3 rounded-lg text-sm">
