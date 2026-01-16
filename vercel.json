@@ -8,5 +8,6 @@
     "app/**": {
       "maxDuration": 10
     }
-  }
+  },
+  "rootDirectory": "tennis-app"
 }
