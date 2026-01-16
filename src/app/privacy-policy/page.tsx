@@ -1,5 +1,11 @@
+import type { Metadata } from "next";
 import Header from "@/components/Header";
 import Link from "next/link";
+
+export const metadata: Metadata = {
+  title: "プライバシーポリシー | テニスコート予約システム",
+  description: "アイパークインスティチュート株式会社のプライバシーポリシー",
+};
 
 export default function PrivacyPolicyPage() {
   return (
