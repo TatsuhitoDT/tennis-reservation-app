@@ -34,7 +34,7 @@ export default function Header() {
   };
 
   return (
-    <header className="bg-primary text-on-primary shadow-lg">
+    <header className="bg-white text-on-background shadow-lg border-b border-outline/20">
       <div className="max-w-6xl mx-auto px-6 py-4">
         {/* ロゴとログアウト */}
         <div className="flex items-center justify-between mb-4">
@@ -48,13 +48,13 @@ export default function Header() {
                 priority
               />
             </div>
-            <h1 className="text-xl font-bold">テニスコート予約</h1>
+            <h1 className="text-xl font-bold text-primary">テニスコート予約</h1>
           </div>
 
           {user && (
             <button
               onClick={handleLogout}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-primary-light transition-colors text-sm"
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-on-primary hover:bg-primary-light transition-colors text-sm"
             >
               <LogOut className="w-4 h-4" />
               ログアウト
@@ -64,13 +64,13 @@ export default function Header() {
 
         {/* タブナビゲーション */}
         {user && (
-          <nav className="flex gap-2 border-b border-primary-light/30">
+          <nav className="flex gap-2 border-b border-outline/20">
             <button
               onClick={() => router.push("/dashboard")}
               className={`px-6 py-3 font-medium transition-colors border-b-2 ${
                 isActive("/dashboard")
-                  ? "border-on-primary text-on-primary"
-                  : "border-transparent text-on-primary/70 hover:text-on-primary"
+                  ? "border-primary text-primary"
+                  : "border-transparent text-on-background/70 hover:text-primary"
               }`}
             >
               <div className="flex items-center gap-2">
@@ -82,8 +82,8 @@ export default function Header() {
               onClick={() => router.push("/mypage")}
               className={`px-6 py-3 font-medium transition-colors border-b-2 ${
                 isActive("/mypage")
-                  ? "border-on-primary text-on-primary"
-                  : "border-transparent text-on-primary/70 hover:text-on-primary"
+                  ? "border-primary text-primary"
+                  : "border-transparent text-on-background/70 hover:text-primary"
               }`}
             >
               <div className="flex items-center gap-2">
