@@ -10,9 +10,9 @@ export default function AuthForm() {
   const [mode, setMode] = useState<AuthMode>("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [fullName, setFullName] = useState("");
-  const [fullNameKana, setFullNameKana] = useState("");
-  const [phone, setPhone] = useState("");
+  const [fullName, setFullName] = useState("山田 太郎");
+  const [fullNameKana, setFullNameKana] = useState("ヤマダ タロウ");
+  const [phone, setPhone] = useState("090-1234-5678");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
@@ -99,6 +99,9 @@ export default function AuthForm() {
               setMode("login");
               setError(null);
               setMessage(null);
+              setFullName("山田 太郎");
+              setFullNameKana("ヤマダ タロウ");
+              setPhone("090-1234-5678");
             }}
             className={`flex-1 py-2 px-4 rounded-lg font-medium transition-colors ${
               mode === "login"
@@ -114,6 +117,9 @@ export default function AuthForm() {
               setMode("signup");
               setError(null);
               setMessage(null);
+              setFullName("山田 太郎");
+              setFullNameKana("ヤマダ タロウ");
+              setPhone("090-1234-5678");
             }}
             className={`flex-1 py-2 px-4 rounded-lg font-medium transition-colors ${
               mode === "signup"
@@ -138,7 +144,17 @@ export default function AuthForm() {
                   <input
                     type="text"
                     value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
+                    onChange={(e) => {
+                      if (fullName === "山田 太郎") {
+                        setFullName("");
+                      }
+                      setFullName(e.target.value);
+                    }}
+                    onFocus={(e) => {
+                      if (e.target.value === "山田 太郎") {
+                        setFullName("");
+                      }
+                    }}
                     className="input pl-10"
                     placeholder="山田 太郎"
                     required
@@ -154,7 +170,17 @@ export default function AuthForm() {
                   <input
                     type="text"
                     value={fullNameKana}
-                    onChange={(e) => setFullNameKana(e.target.value)}
+                    onChange={(e) => {
+                      if (fullNameKana === "ヤマダ タロウ") {
+                        setFullNameKana("");
+                      }
+                      setFullNameKana(e.target.value);
+                    }}
+                    onFocus={(e) => {
+                      if (e.target.value === "ヤマダ タロウ") {
+                        setFullNameKana("");
+                      }
+                    }}
                     className="input pl-10"
                     placeholder="ヤマダ タロウ"
                     required
@@ -170,7 +196,17 @@ export default function AuthForm() {
                   <input
                     type="tel"
                     value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
+                    onChange={(e) => {
+                      if (phone === "090-1234-5678") {
+                        setPhone("");
+                      }
+                      setPhone(e.target.value);
+                    }}
+                    onFocus={(e) => {
+                      if (e.target.value === "090-1234-5678") {
+                        setPhone("");
+                      }
+                    }}
                     className="input pl-10"
                     placeholder="090-1234-5678"
                     required
