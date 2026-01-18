@@ -96,7 +96,17 @@ export default function BookingCalendar({ userId, onTimeSelect, selectionMode = 
       return;
     }
 
-    // 予約作成モード
+    // 予約作成モード: 1日2時間制限のクライアント側チェック
+    const booked = getUserBookedMinutesForDate(date);
+    if (booked >= 120) {
+      setError("同一コートでの1日の予約は最大2時間までです");
+      return;
+    }
+    if (booked + 60 > 120) {
+      setError("同一コートでの1日の予約は最大2時間までです。あと" + (120 - booked) + "分のみ予約可能です。");
+      return;
+    }
+
     try {
       setLoading(true);
       const endTime = `${(parseInt(time.split(":")[0]) + 1).toString().padStart(2, "0")}:00`;
@@ -118,6 +128,20 @@ export default function BookingCalendar({ userId, onTimeSelect, selectionMode = 
     const dateReservations = reservations[date] || [];
     return dateReservations.some(
       (r) => r.start_time.substring(0, 5) === time
+    );
+  };
+
+  /** 同一コート・同日のユーザー予約の合計分数（1日2時間制限用） */
+  const getUserBookedMinutesForDate = (date: string): number => {
+    const dateReservations = reservations[date] || [];
+    const userReservations = dateReservations.filter((r) => r.user_id === userId);
+    const toMinutes = (t: string) => {
+      const [h, m] = (t.substring(0, 5) || "0:0").split(":").map(Number);
+      return (h || 0) * 60 + (m || 0);
+    };
+    return userReservations.reduce(
+      (sum, r) => sum + (toMinutes(r.end_time) - toMinutes(r.start_time)),
+      0
     );
   };
 
@@ -216,6 +240,7 @@ export default function BookingCalendar({ userId, onTimeSelect, selectionMode = 
                   const dateStr = format(day, "yyyy-MM-dd");
                   const bookable = isBookableDate(day);
                   const booked = isTimeSlotBooked(dateStr, time);
+                  const atDailyLimit = getUserBookedMinutesForDate(dateStr) >= 120;
                   const isSelected =
                     selectedDate === dateStr && selectedTime === time;
 
@@ -224,16 +249,16 @@ export default function BookingCalendar({ userId, onTimeSelect, selectionMode = 
                       {bookable ? (
                         <button
                           onClick={() => handleTimeSlotClick(dateStr, time)}
-                          disabled={booked || loading}
+                          disabled={booked || loading || atDailyLimit}
                           className={`w-full py-2 px-3 rounded-lg text-sm font-medium transition-colors ${
-                            booked
+                            booked || atDailyLimit
                               ? "bg-outline/30 text-outline cursor-not-allowed"
                               : isSelected
                               ? "bg-primary-accent text-white"
                               : "bg-primary-light/10 text-primary hover:bg-primary-light/20"
                           }`}
                         >
-                          {booked ? (
+                          {booked || atDailyLimit ? (
                             <XCircle className="w-4 h-4 mx-auto" />
                           ) : (
                             <CheckCircle className="w-4 h-4 mx-auto" />

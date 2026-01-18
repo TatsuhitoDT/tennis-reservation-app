@@ -94,13 +94,6 @@ export default function Home() {
           </ul>
         </section>
       </main>
-
-      {/* フッター */}
-      <footer className="bg-surface border-t border-outline/20 py-6 mt-16">
-        <div className="max-w-6xl mx-auto px-6 text-center text-on-background/50 text-sm">
-          <p>© 2025 テニスコート予約システム</p>
-        </div>
-      </footer>
     </div>
   );
 }
