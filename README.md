@@ -57,6 +57,13 @@ http://localhost:3000 でアプリが起動します。
 
 ---
 
+## 📝 コミットメッセージ
+
+**Vercel のデプロイ一覧で文字化けしないよう、コミットメッセージは英語で書くことを推奨します。**  
+例: `Add privacy policy link to footer`, `Fix 404: set Root Directory empty`
+
+---
+
 ## 📁 プロジェクト構造
 
 ```
