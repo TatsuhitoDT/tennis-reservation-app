@@ -281,17 +281,17 @@ export default function AuthForm() {
           </div>
 
           {mode === "signup" && (
-            <div className="flex items-start gap-2">
+            <div className="flex items-start gap-3 p-3 rounded-lg border border-outline/30 bg-surface/50">
               <input
                 type="checkbox"
                 id="privacy-accept"
                 checked={privacyAccepted}
                 onChange={(e) => setPrivacyAccepted(e.target.checked)}
-                className="mt-1 w-4 h-4 text-primary-accent border-outline rounded focus:ring-primary-accent focus:ring-2"
+                className="mt-1 w-4 h-4 text-primary-accent border-outline rounded focus:ring-primary-accent focus:ring-2 flex-shrink-0"
                 required
               />
-              <label htmlFor="privacy-accept" className="text-sm text-on-background/80 cursor-pointer">
-                <Link href="/privacy-policy" target="_blank" className="text-primary-accent hover:underline">
+              <label htmlFor="privacy-accept" className="text-sm text-on-background cursor-pointer">
+                <Link href="/privacy-policy" target="_blank" rel="noopener noreferrer" className="text-primary-accent hover:underline font-medium">
                   プライバシーポリシー
                 </Link>
                 に同意します <span className="text-highlight">*</span>
