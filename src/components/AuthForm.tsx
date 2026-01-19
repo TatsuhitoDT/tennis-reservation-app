@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { LogIn, UserPlus, Mail, Lock, Phone } from "lucide-react";
+import { LogIn, UserPlus } from "lucide-react";
 import Link from "next/link";
 
 type AuthMode = "login" | "signup";
@@ -148,91 +148,76 @@ export default function AuthForm() {
                 <label className="block text-sm font-medium text-on-background mb-2">
                   お名前 <span className="text-highlight">*</span>
                 </label>
-                <div className="relative">
-                  {(!focusedField || focusedField !== "fullName") && fullName === "山田 太郎" && (
-                    <UserPlus className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-outline" />
-                  )}
-                  <input
-                    type="text"
-                    value={fullName}
-                    onChange={(e) => {
-                      if (fullName === "山田 太郎") {
-                        setFullName("");
-                      }
-                      setFullName(e.target.value);
-                    }}
-                    onFocus={(e) => {
-                      setFocusedField("fullName");
-                      if (e.target.value === "山田 太郎") {
-                        setFullName("");
-                      }
-                    }}
-                    onBlur={() => setFocusedField(null)}
-                    className={`input ${(!focusedField || focusedField !== "fullName") && fullName === "山田 太郎" ? "pl-10" : "pl-3"}`}
-                    placeholder="山田 太郎"
-                    required
-                  />
-                </div>
+                <input
+                  type="text"
+                  value={fullName}
+                  onChange={(e) => {
+                    if (fullName === "山田 太郎") {
+                      setFullName("");
+                    }
+                    setFullName(e.target.value);
+                  }}
+                  onFocus={(e) => {
+                    setFocusedField("fullName");
+                    if (e.target.value === "山田 太郎") {
+                      setFullName("");
+                    }
+                  }}
+                  onBlur={() => setFocusedField(null)}
+                  className={`input ${fullName === "山田 太郎" ? "text-outline" : ""}`}
+                  placeholder="山田 太郎"
+                  required
+                />
               </div>
               <div>
                 <label className="block text-sm font-medium text-on-background mb-2">
                   お名前（カナ） <span className="text-highlight">*</span>
                 </label>
-                <div className="relative">
-                  {(!focusedField || focusedField !== "fullNameKana") && fullNameKana === "ヤマダ タロウ" && (
-                    <UserPlus className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-outline" />
-                  )}
-                  <input
-                    type="text"
-                    value={fullNameKana}
-                    onChange={(e) => {
-                      if (fullNameKana === "ヤマダ タロウ") {
-                        setFullNameKana("");
-                      }
-                      setFullNameKana(e.target.value);
-                    }}
-                    onFocus={(e) => {
-                      setFocusedField("fullNameKana");
-                      if (e.target.value === "ヤマダ タロウ") {
-                        setFullNameKana("");
-                      }
-                    }}
-                    onBlur={() => setFocusedField(null)}
-                    className={`input ${(!focusedField || focusedField !== "fullNameKana") && fullNameKana === "ヤマダ タロウ" ? "pl-10" : "pl-3"}`}
-                    placeholder="ヤマダ タロウ"
-                    required
-                  />
-                </div>
+                <input
+                  type="text"
+                  value={fullNameKana}
+                  onChange={(e) => {
+                    if (fullNameKana === "ヤマダ タロウ") {
+                      setFullNameKana("");
+                    }
+                    setFullNameKana(e.target.value);
+                  }}
+                  onFocus={(e) => {
+                    setFocusedField("fullNameKana");
+                    if (e.target.value === "ヤマダ タロウ") {
+                      setFullNameKana("");
+                    }
+                  }}
+                  onBlur={() => setFocusedField(null)}
+                  className={`input ${fullNameKana === "ヤマダ タロウ" ? "text-outline" : ""}`}
+                  placeholder="ヤマダ タロウ"
+                  required
+                />
               </div>
               <div>
                 <label className="block text-sm font-medium text-on-background mb-2">
                   電話番号 <span className="text-highlight">*</span>
                 </label>
-                <div className="relative">
-                  {(!focusedField || focusedField !== "phone") && phone === "090-1234-5678" && (
-                    <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-outline" />
-                  )}
-                  <input
-                    type="tel"
-                    value={phone}
-                    onChange={(e) => {
-                      if (phone === "090-1234-5678") {
-                        setPhone("");
-                      }
-                      setPhone(e.target.value);
-                    }}
-                    onFocus={(e) => {
-                      setFocusedField("phone");
-                      if (e.target.value === "090-1234-5678") {
-                        setPhone("");
-                      }
-                    }}
-                    onBlur={() => setFocusedField(null)}
-                    className={`input ${(!focusedField || focusedField !== "phone") && phone === "090-1234-5678" ? "pl-10" : "pl-3"}`}
-                    placeholder="090-1234-5678"
-                    required
-                  />
-                </div>
+                <input
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => {
+                    if (phone === "090-1234-5678") {
+                      setPhone("");
+                    }
+                    setPhone(e.target.value);
+                  }}
+                  onFocus={(e) => {
+                    setFocusedField("phone");
+                    if (e.target.value === "090-1234-5678") {
+                      setPhone("");
+                    }
+                  }}
+                  onBlur={() => setFocusedField(null)}
+                  className={`input ${phone === "090-1234-5678" ? "text-outline" : ""}`}
+                  placeholder="090-1234-5678"
+                  required
+                />
               </div>
             </>
           )}
@@ -241,43 +226,33 @@ export default function AuthForm() {
             <label className="block text-sm font-medium text-on-background mb-2">
               メールアドレス
             </label>
-            <div className="relative">
-              {(!focusedField || focusedField !== "email") && !email && (
-                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-outline" />
-              )}
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                onFocus={() => setFocusedField("email")}
-                onBlur={() => setFocusedField(null)}
-                className={`input ${(!focusedField || focusedField !== "email") && !email ? "pl-10" : "pl-3"}`}
-                placeholder="example@company.com"
-                required
-              />
-            </div>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              onFocus={() => setFocusedField("email")}
+              onBlur={() => setFocusedField(null)}
+              className="input"
+              placeholder="example@company.com"
+              required
+            />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-on-background mb-2">
               パスワード
             </label>
-            <div className="relative">
-              {(!focusedField || focusedField !== "password") && !password && (
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-outline" />
-              )}
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                onFocus={() => setFocusedField("password")}
-                onBlur={() => setFocusedField(null)}
-                className={`input ${(!focusedField || focusedField !== "password") && !password ? "pl-10" : "pl-3"}`}
-                placeholder="••••••••"
-                required
-                minLength={6}
-              />
-            </div>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              onFocus={() => setFocusedField("password")}
+              onBlur={() => setFocusedField(null)}
+              className="input"
+              placeholder="••••••••"
+              required
+              minLength={6}
+            />
           </div>
 
           {mode === "signup" && (

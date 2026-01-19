@@ -14,7 +14,7 @@
 - **確認場所**: Deployments タブ → 最新のデプロイのコミットハッシュ
 
 ### 条件3: Root Directory
-- **値**: `tennis-app`
+- **値**: **空**（未入力）。リポジトリ `tennis-reservation-app` のルートが Next.js のルートのため。
 - **確認場所**: Settings → General → Root Directory
 
 ---
@@ -65,7 +65,7 @@
 
 3. **Root Directoryの確認**
    - Settings → General → Root Directory
-   - `tennis-app` と表示されているか
+   - **空**（何も入力されていない）か確認
 
 ---
 

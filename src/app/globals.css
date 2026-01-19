@@ -55,5 +55,6 @@ body {
 .input {
   @apply w-full px-4 py-3 border border-outline rounded-lg
          focus:outline-none focus:ring-2 focus:ring-primary-accent focus:border-transparent
-         transition-all duration-200;
+         transition-all duration-200
+         placeholder:text-outline;
 }

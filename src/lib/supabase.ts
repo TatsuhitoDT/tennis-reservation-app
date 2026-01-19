@@ -13,10 +13,10 @@ if (typeof window === "undefined") {
   }
 }
 
-// クライアントサイドでのチェック
+// クライアント: 未設定時は throw せず console に出して起動は続行（認証・DB は失敗する）
 if (typeof window !== "undefined" && (!supabaseUrl || !supabaseAnonKey)) {
-  throw new Error(
-    "Missing Supabase environment variables. Please check NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are set."
+  console.error(
+    "[Supabase] Missing env: NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY. Set them in Vercel Settings > Environment Variables."
   );
 }
 
@@ -24,6 +24,9 @@ export const supabase = createClient(
   supabaseUrl || "https://placeholder.supabase.co",
   supabaseAnonKey || "placeholder-key"
 );
+
+/** 環境変数で Supabase が設定されているか（未設定だと認証・DB は動かない） */
+export const isSupabaseConfigured = !!(supabaseUrl && supabaseAnonKey);
 
 // 型定義
 export type Profile = {
