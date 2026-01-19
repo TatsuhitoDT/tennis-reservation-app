@@ -47,9 +47,10 @@ export default function AuthForm() {
           },
         });
 
-        // 登録済みメール: エラー「User already registered」または identities が空
+        // 登録済みメール: エラー「User already registered」「Email address ... is invalid」または identities が空
         const isAlreadyRegistered =
           (signUpError?.message && /already|registered|既に登録/i.test(signUpError.message)) ||
+          (signUpError?.message && /Email address .+ is invalid/i.test(signUpError.message)) ||
           (data?.user && (!data.user.identities || data.user.identities.length === 0));
 
         if (isAlreadyRegistered) {
@@ -107,12 +108,7 @@ export default function AuthForm() {
         window.location.href = "/dashboard";
       }
     } catch (err: any) {
-      const msg = err?.message || "エラーが発生しました";
-      if (mode === "signup" && /Email address .+ is invalid/i.test(msg)) {
-        setError("登録済のメールアドレスです。パスワードが不明の場合はリセットしてください。");
-      } else {
-        setError(msg);
-      }
+      setError(err?.message || "エラーが発生しました");
     } finally {
       setLoading(false);
     }
