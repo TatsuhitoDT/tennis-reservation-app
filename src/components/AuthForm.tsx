@@ -17,6 +17,7 @@ export default function AuthForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [alreadyRegisteredEmail, setAlreadyRegisteredEmail] = useState<string | null>(null);
   const [focusedField, setFocusedField] = useState<string | null>(null);
   const [privacyAccepted, setPrivacyAccepted] = useState(false);
 
@@ -25,6 +26,7 @@ export default function AuthForm() {
     setLoading(true);
     setError(null);
     setMessage(null);
+    setAlreadyRegisteredEmail(null);
 
     try {
       if (mode === "signup") {
@@ -44,6 +46,19 @@ export default function AuthForm() {
             },
           },
         });
+
+        // 登録済みメール: エラー「User already registered」または identities が空
+        const isAlreadyRegistered =
+          (signUpError?.message && /already|registered|既に登録/i.test(signUpError.message)) ||
+          (data?.user && (!data.user.identities || data.user.identities.length === 0));
+
+        if (isAlreadyRegistered) {
+          setAlreadyRegisteredEmail(email);
+          setError(null);
+          setMessage(null);
+          setLoading(false);
+          return;
+        }
 
         if (signUpError) throw signUpError;
 
@@ -107,6 +122,7 @@ export default function AuthForm() {
               setMode("login");
               setError(null);
               setMessage(null);
+              setAlreadyRegisteredEmail(null);
               setFullName("山田 太郎");
               setFullNameKana("ヤマダ タロウ");
               setPhone("090-1234-5678");
@@ -125,6 +141,7 @@ export default function AuthForm() {
               setMode("signup");
               setError(null);
               setMessage(null);
+              setAlreadyRegisteredEmail(null);
               setFullName("山田 太郎");
               setFullNameKana("ヤマダ タロウ");
               setPhone("090-1234-5678");
@@ -253,6 +270,16 @@ export default function AuthForm() {
               required
               minLength={6}
             />
+            {mode === "login" && (
+              <p className="mt-1.5 text-right">
+                <Link
+                  href={email ? `/forgot-password?email=${encodeURIComponent(email)}` : "/forgot-password"}
+                  className="text-sm text-primary-accent hover:underline"
+                >
+                  パスワードをお忘れの方
+                </Link>
+              </p>
+            )}
           </div>
 
           {mode === "signup" && (
@@ -271,6 +298,19 @@ export default function AuthForm() {
                 </Link>
                 に同意します <span className="text-highlight">*</span>
               </label>
+            </div>
+          )}
+
+          {alreadyRegisteredEmail && (
+            <div className="bg-primary/10 border border-primary text-primary px-4 py-3 rounded-lg text-sm space-y-2">
+              <p>このメールアドレスは既に登録されています。「ログイン」タブからログインするか、<Link href={`/forgot-password?email=${encodeURIComponent(alreadyRegisteredEmail)}`} className="text-primary-accent font-medium hover:underline">パスワードをリセット</Link>から再設定してください。</p>
+              <button
+                type="button"
+                onClick={() => { setMode("login"); setAlreadyRegisteredEmail(null); }}
+                className="text-sm font-medium text-primary-accent hover:underline"
+              >
+                ログインへ
+              </button>
             </div>
           )}
 

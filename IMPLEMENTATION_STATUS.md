@@ -9,7 +9,8 @@
 | パス | ファイル | 実装 |
 |------|----------|------|
 | `/` | `app/page.tsx` | ✅ トップページ（ヒーロー、特徴、利用ルール、ログインボタン） |
-| `/login` | `app/login/page.tsx` | ✅ ログイン・新規登録（AuthForm、未ログイン時リダイレクト） |
+| `/login` | `app/login/page.tsx` | ✅ ログイン・新規登録（AuthForm、未ログイン時リダイレクト）、パスワードリセット後の新パスワード設定 |
+| `/forgot-password` | `app/forgot-password/page.tsx` | ✅ パスワードリセット用メール送信（`resetPasswordForEmail`、`redirectTo=/login`） |
 | `/dashboard` | `app/dashboard/page.tsx` | ✅ 予約カレンダー（要ログイン） |
 | `/mypage` | `app/mypage/page.tsx` | ✅ マイページ（プロフィール・マイ予約タブ、要ログイン） |
 | `/member/reservations` | `app/member/reservations/page.tsx` | ✅ 予約履歴一覧（フィルター、詳細・変更・キャンセル、要ログイン） |
@@ -36,8 +37,10 @@
 
 | 機能 | 実装場所 | 内容 |
 |------|----------|------|
-| ログイン | AuthForm | ✅ `signInWithPassword` |
+| ログイン | AuthForm | ✅ `signInWithPassword`。「パスワードをお忘れの方」→ `/forgot-password` |
 | 新規登録 | AuthForm | ✅ `signUp`、`options.data` に full_name, full_name_kana, phone |
+| 登録済みメールで再登録 | AuthForm | ✅ `identities` 空 or エラー「already registered」で検出。登録済み案内＋「ログインへ」「パスワードをリセット」リンク（`/forgot-password?email=`）。認証メールは送らない |
+| パスワードリセット | /forgot-password, /login | ✅ `/forgot-password` で `resetPasswordForEmail`、`redirectTo=/login`。メールのリンクから `/login#...&type=recovery` で戻る→ `setSession` 後に「新しいパスワードを設定」フォーム→ `updateUser` で完了 |
 | プロフィール補完 | AuthForm | ✅ 登録後 `profiles` の有無を確認し、なければ `insert` |
 | メール認証 | Supabase | 仕様上、Supabase Auth の標準機能に依存 |
 
