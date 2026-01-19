@@ -107,7 +107,12 @@ export default function AuthForm() {
         window.location.href = "/dashboard";
       }
     } catch (err: any) {
-      setError(err.message || "エラーが発生しました");
+      const msg = err?.message || "エラーが発生しました";
+      if (mode === "signup" && /Email address .+ is invalid/i.test(msg)) {
+        setError("登録済のメールアドレスです。パスワードが不明の場合はリセットしてください。");
+      } else {
+        setError(msg);
+      }
     } finally {
       setLoading(false);
     }
