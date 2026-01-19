@@ -116,6 +116,9 @@ export default function ReservationsPage() {
           <p className="text-on-background/70">
             すべての予約を確認・管理できます。
           </p>
+          <p className="mt-2 text-sm text-on-background/60">
+            ※予約の完了・変更・キャンセル時にメール通知は送信されません。
+          </p>
         </div>
 
         {/* フィルター */}

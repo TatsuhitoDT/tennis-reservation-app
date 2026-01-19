@@ -177,6 +177,11 @@ export default function ReservationDetailPage() {
               </div>
             )}
             <div className="pt-4 border-t border-outline/20">
+              <p className="text-sm text-on-background/60">
+                予約の変更・キャンセル時にメール通知は送信されません。
+              </p>
+            </div>
+            <div className="pt-4 border-t border-outline/20">
               <span className="text-sm text-on-background/60">作成日時:</span>
               <p className="text-on-background/80">
                 {new Date(reservation.created_at).toLocaleString("ja-JP")}
@@ -249,6 +254,9 @@ export default function ReservationDetailPage() {
               />
             </div>
 
+            <p className="text-sm text-on-background/60">
+              変更確定後もメール通知は送信されません。予約履歴でご確認ください。
+            </p>
             <div className="flex gap-4">
               <button
                 onClick={handleUpdate}

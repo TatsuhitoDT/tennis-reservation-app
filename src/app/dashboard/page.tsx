@@ -42,6 +42,9 @@ export default function DashboardPage() {
           <p className="text-on-background/70">
             土曜・日曜・祝日のみ予約可能です。1日最大2時間まで予約できます。
           </p>
+          <p className="mt-3 text-sm text-on-background/60">
+            ※予約の完了・変更・キャンセル時にメール通知は送信されません。内容はマイページ・予約履歴でご確認ください。
+          </p>
         </div>
         <BookingCalendar userId={user?.id} />
       </main>
