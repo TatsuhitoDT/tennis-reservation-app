@@ -63,7 +63,7 @@
 | `getReservationsByDate(date, courtId?)` | ✅ `court_id` でフィルター、`court:courts(*)` |
 | `createReservation(..., courtId, ...)` | ✅ `court_id` を渡して挿入 |
 | `updateReservation(..., courtId, ...)` | ✅ `court_id` を更新 |
-| BookingCalendar | ✅ コート選択ボタン（`court.display_name`）、`selectedCourt` で予約・表示を切替 |
+| BookingCalendar | ✅ コート選択、**月曜始まり**の週表示、**枠を選択→「予約を確定」**。1日2枠・1週間（表示7日）2枠まで。選択の再押下でキャンセル。`selectionMode` 時は 1 枠選択＋再押下で解除、`onTimeSelect(null,null,null)` |
 | 予約詳細 `[id]` | ✅ コート表示、変更時にコート選択・`BookingCalendar` に `selectedCourtId` |
 | 予約一覧 | ✅ `reservation.court?.display_name` を表示 |
 
@@ -75,7 +75,8 @@
 |--------|------|
 | 土曜・日曜・祝日のみ | ✅ `dateUtils.isBookableDate` → `isWeekend` or `isHoliday`（2025年祝日リスト）、BookingCalendar で使用 |
 | 9:00〜17:00、1時間単位 | ✅ `dateUtils.generateTimeSlots()`（9〜16時）、BookingCalendar |
-| 1日2時間まで | ✅ DB の `check_daily_limit` トリガー ＋ クライアント側で `getUserBookedMinutesForDate` による事前チェック・スロット無効化（同一コート・同日） |
+| 1日2枠・1週間2枠 | ✅ 選択時に 1 日 2 枠まで（既存予約＋選択数を考慮）、表示 7 日で合計 2 枠まで。枠選択はトグル（再押下でキャンセル）。「予約を確定」で一括作成。DB の `check_daily_limit` も継続。 |
+| 1日2時間まで（DB） | ✅ DB の `check_daily_limit` トリガー（同一コート・同日）。クライアント側は上記の 1 日 2 枠で整合。 |
 | 前日までキャンセル可能（当日は不可） | ✅ `canModify(bookingDate)`: `date > tomorrow`。mypage、`member/reservations`、`member/reservations/[id]` で使用し、キャンセル・変更ボタンの表示を制御 |
 
 ---

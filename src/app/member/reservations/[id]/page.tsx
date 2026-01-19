@@ -248,8 +248,8 @@ export default function ReservationDetailPage() {
                 selectionMode={true}
                 selectedCourtId={selectedCourtId}
                 onTimeSelect={(date, start, end) => {
-                  setSelectedDate(date);
-                  setSelectedTime({ start, end });
+                  setSelectedDate(date ?? "");
+                  setSelectedTime(date != null && start != null && end != null ? { start, end } : null);
                 }}
               />
             </div>
