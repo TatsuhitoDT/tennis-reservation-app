@@ -177,7 +177,7 @@ export default function ReservationDetailPage() {
               </div>
             )}
             <div className="pt-4 border-t border-outline/20">
-              <p className="text-sm text-on-background/60">
+              <p className="text-sm text-primary font-medium">
                 予約の変更・キャンセル時にメール通知は送信されません。
               </p>
             </div>
@@ -254,7 +254,7 @@ export default function ReservationDetailPage() {
               />
             </div>
 
-            <p className="text-sm text-on-background/60">
+            <p className="text-sm text-primary font-medium">
               変更確定後もメール通知は送信されません。予約履歴でご確認ください。
             </p>
             <div className="flex gap-4">

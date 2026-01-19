@@ -42,7 +42,7 @@ export default function DashboardPage() {
           <p className="text-on-background/70">
             土曜・日曜・祝日のみ予約可能です。1日2枠・1週間（表示の7日）で2枠まで。枠を選んで「予約を確定」を押してください。選択の解除は枠を再クリックしてください。
           </p>
-          <p className="mt-3 text-sm text-on-background/60">
+          <p className="mt-3 text-sm text-primary font-medium">
             ※予約の完了・変更・キャンセル時にメール通知は送信されません。内容はマイページ・予約履歴でご確認ください。
           </p>
         </div>

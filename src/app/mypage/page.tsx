@@ -329,7 +329,7 @@ export default function MyPage() {
 
         {activeTab === "reservations" && (
           <div className="space-y-6">
-            <p className="text-sm text-on-background/60">
+            <p className="text-sm text-primary font-medium">
               予約の完了・変更・キャンセル時にメール通知は送信されません。内容は予約履歴でご確認ください。
             </p>
             {/* 今後の予約 */}
