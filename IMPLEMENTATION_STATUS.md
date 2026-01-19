@@ -23,7 +23,7 @@
 
 | 項目 | 実装 |
 |------|------|
-| `layout.tsx` | ✅ `Footer` を全ページに表示 |
+| `layout.tsx` | ✅ `Footer` を全ページに表示。`EnvBanner`（Supabase 未設定時のみ表示） |
 | `Footer` | ✅ 「運営会社 iPark Institute Co., Ltd.」「プライバシーポリシー」リンク（`/privacy-policy`） |
 | `Header` | ✅ ロゴ（`/logo-white.svg`）、タイトル、タブ（トップ・予約カレンダー・マイページ）、ログアウト |
 | `globals.css` | ✅ テーマ（primary-accent 等） |
@@ -97,7 +97,7 @@
 | 項目 | 実装 |
 |------|------|
 | ヘッダー | ✅ `bg-primary-accent`、`/logo-white.svg`、白文字、ログアウト・タブ |
-| 新規登録のプレースホルダー | ✅ `fullName`「山田 太郎」等、フォーカスでクリア、`focusedField` でアイコン表示制御（AuthForm） |
+| 新規登録の入力例・プレースホルダー | ✅ お名前等は初期値で例を表示（グレー）、フォーカスでクリア。プレースホルダーは `placeholder:text-outline` で統一。フィールド先頭のアイコンはなし（AuthForm） |
 | 静的アセット | ✅ `public/logo-white.svg` あり |
 
 ---
@@ -106,7 +106,7 @@
 
 | 項目 | 内容 |
 |------|------|
-| `supabase.ts` | ✅ `createClient`、`NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY`。未設定時は `console.warn`（SSR）または `throw`（クライアント） |
+| `supabase.ts` | ✅ `createClient`、`NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY`。未設定時は `console.error` でログ、`EnvBanner` で画面上部に警告表示 |
 | 想定テーブル | `profiles`, `reservations`, `courts`（`doc/02_database_setup.sql`, `doc/03_reservations_update_policy.sql`, `doc/05_database_update_for_courts.sql` 等を参照） |
 
 ---

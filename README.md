@@ -26,14 +26,13 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
 
 ### 4. Supabaseデータベースセットアップ
-親フォルダーの `doc/` を参照：
+`doc/`（親ディレクトリ）を参照：
 
-1. **基本テーブル作成**
-   - `../doc/02_database_setup.sql` をSupabaseのSQL Editorで実行
-
-2. **コート2面対応**（必須）
-   - `../doc/05_database_update_for_courts.sql` を実行
-   - `../doc/15_court_update_execution_guide.md` で実行手順を参照
+1. **基本テーブル**: `../doc/02_database_setup.sql` を実行
+2. **予約変更用RLS**（必須）: `../doc/03_reservations_update_policy.sql` を実行
+3. **コート2面対応**（必須）: `../doc/05_database_update_for_courts.sql` を実行  
+   - 手順: `../doc/15_court_update_execution_guide.md`
+4. **マイページ用**（任意）: `../doc/04_database_update_for_mypage.sql` を実行
 
 ### 5. 開発サーバー起動
 ```bash
@@ -84,7 +83,7 @@ tennis-app/
 │       ├── supabase.ts          # Supabaseクライアント・API
 │       └── dateUtils.ts         # 日付ユーティリティ
 ├── public/                      # 静的ファイル
-│   └── ipark_logo.png          # ロゴ画像
+│   └── logo-white.svg          # ロゴ
 ├── package.json
 └── README.md
 ```
@@ -157,9 +156,8 @@ npm run lint
 
 詳細なドキュメントは親フォルダーの `doc/` を参照：
 
-- **デプロイガイド**: `../doc/06_vercel_deployment_guide.md`
-- **データベースセットアップ**: `../doc/02_database_setup.sql`
-- **コート2面対応**: `../doc/05_database_update_for_courts.sql`
+- **デプロイ**: `../doc/06_vercel_deployment_guide.md`
+- **DB**: `../doc/02_database_setup.sql`, `../doc/03_reservations_update_policy.sql`, `../doc/05_database_update_for_courts.sql`
 
 ---
 
