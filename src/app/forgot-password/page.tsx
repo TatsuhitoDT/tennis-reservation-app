@@ -1,13 +1,12 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useState, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import Header from "@/components/Header";
 
-export default function ForgotPasswordPage() {
-  const router = useRouter();
+function ForgotPasswordForm() {
   const searchParams = useSearchParams();
   const emailParam = searchParams.get("email") || "";
 
@@ -101,5 +100,22 @@ export default function ForgotPasswordPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function ForgotPasswordPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-background">
+          <Header />
+          <div className="max-w-md mx-auto px-6 py-12">
+            <div className="card text-center text-on-background/70">読み込み中...</div>
+          </div>
+        </div>
+      }
+    >
+      <ForgotPasswordForm />
+    </Suspense>
   );
 }
