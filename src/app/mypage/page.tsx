@@ -7,7 +7,6 @@ import { getAllUserReservations, type Reservation, type Profile } from "@/lib/su
 import Header from "@/components/Header";
 import { formatDate, formatTime } from "@/lib/dateUtils";
 import { User, Calendar, Clock, Edit, Save, Phone, Mail, Trash2 } from "lucide-react";
-import Link from "next/link";
 
 type TabType = "profile" | "reservations";
 
@@ -182,21 +181,13 @@ export default function MyPage() {
                 プロフィール情報
               </h3>
               {!editing && (
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => setEditing(true)}
-                    className="btn-secondary flex items-center gap-2 text-sm"
-                  >
-                    <Edit className="w-4 h-4" />
-                    編集
-                  </button>
-                  <Link
-                    href="/member/profile"
-                    className="text-sm text-primary-accent hover:underline"
-                  >
-                    詳細編集ページへ
-                  </Link>
-                </div>
+                <button
+                  onClick={() => router.push("/member/profile")}
+                  className="btn-secondary flex items-center gap-2 text-sm"
+                >
+                  <Edit className="w-4 h-4" />
+                  編集
+                </button>
               )}
             </div>
 
