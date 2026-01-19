@@ -66,50 +66,48 @@ export default function Header() {
 
         </div>
 
-        {/* タブナビゲーション */}
-        {user && (
-          <nav className="flex gap-2 border-b border-white/20 justify-center">
-            <button
-              onClick={() => router.push("/")}
-              className={`px-6 py-3 font-medium transition-colors border-b-2 ${
-                isActive("/")
-                  ? "border-white text-white"
-                  : "border-transparent text-white/70 hover:text-white"
-              }`}
-            >
-              <div className="flex items-center gap-2">
-                <Home className="w-4 h-4" />
-                トップページ
-              </div>
-            </button>
-            <button
-              onClick={() => router.push("/dashboard")}
-              className={`px-6 py-3 font-medium transition-colors border-b-2 ${
-                isActive("/dashboard")
-                  ? "border-white text-white"
-                  : "border-transparent text-white/70 hover:text-white"
-              }`}
-            >
-              <div className="flex items-center gap-2">
-                <Calendar className="w-4 h-4" />
-                予約カレンダー
-              </div>
-            </button>
-            <button
-              onClick={() => router.push("/mypage")}
-              className={`px-6 py-3 font-medium transition-colors border-b-2 ${
-                isActive("/mypage")
-                  ? "border-white text-white"
-                  : "border-transparent text-white/70 hover:text-white"
-              }`}
-            >
-              <div className="flex items-center gap-2">
-                <User className="w-4 h-4" />
-                マイページ
-              </div>
-            </button>
-          </nav>
-        )}
+        {/* タブナビゲーション（常に表示） */}
+        <nav className="flex gap-2 border-b border-white/20 justify-center">
+          <button
+            onClick={() => router.push("/")}
+            className={`px-6 py-3 font-medium transition-colors border-b-2 ${
+              isActive("/")
+                ? "border-white text-white"
+                : "border-transparent text-white/70 hover:text-white"
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <Home className="w-4 h-4" />
+              トップページ
+            </div>
+          </button>
+          <button
+            onClick={() => router.push("/dashboard")}
+            className={`px-6 py-3 font-medium transition-colors border-b-2 ${
+              isActive("/dashboard")
+                ? "border-white text-white"
+                : "border-transparent text-white/70 hover:text-white"
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <Calendar className="w-4 h-4" />
+              予約カレンダー
+            </div>
+          </button>
+          <button
+            onClick={() => router.push("/mypage")}
+            className={`px-6 py-3 font-medium transition-colors border-b-2 ${
+              isActive("/mypage")
+                ? "border-white text-white"
+                : "border-transparent text-white/70 hover:text-white"
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <User className="w-4 h-4" />
+              マイページ
+            </div>
+          </button>
+        </nav>
       </div>
     </header>
   );
