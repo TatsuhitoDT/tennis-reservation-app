@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabase";
 import { getUserReservations, cancelReservation, type Reservation } from "@/lib/supabase";
 import Header from "@/components/Header";
 import { formatDate, formatTime } from "@/lib/dateUtils";
+import { VISIT_APPLICATION_NOTICE } from "@/lib/constants";
 import { Calendar, Clock, Trash2, Edit, Eye } from "lucide-react";
 
 type FilterType = "all" | "thisMonth" | "nextMonth" | "past";
@@ -253,6 +254,10 @@ export default function ReservationsPage() {
             })}
           </div>
         )}
+
+        <div className="mt-8 pt-6 border-t border-outline/20">
+          <p className="text-sm text-primary font-medium">{VISIT_APPLICATION_NOTICE}</p>
+        </div>
       </main>
     </div>
   );

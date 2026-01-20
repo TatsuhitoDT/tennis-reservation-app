@@ -3,6 +3,7 @@
 import { Calendar, Clock, User, LogIn } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Header from "@/components/Header";
+import { VISIT_APPLICATION_NOTICE } from "@/lib/constants";
 
 export default function Home() {
   const router = useRouter();
@@ -69,6 +70,11 @@ export default function Home() {
               予約確認・キャンセルがいつでも可能。履歴も一覧で確認。
             </p>
           </div>
+        </section>
+
+        {/* 注意書き（来館申請） */}
+        <section className="card mb-6 bg-primary/5 border border-primary/20">
+          <p className="text-primary font-medium">{VISIT_APPLICATION_NOTICE}</p>
         </section>
 
         {/* 利用ルール */}

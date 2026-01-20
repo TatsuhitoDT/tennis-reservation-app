@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabase";
 import { type Reservation, getCourts, type Court } from "@/lib/supabase";
 import Header from "@/components/Header";
 import { formatDate, formatTime } from "@/lib/dateUtils";
+import { VISIT_APPLICATION_NOTICE } from "@/lib/constants";
 import { Calendar, Clock, Edit, Save, X } from "lucide-react";
 import BookingCalendar from "@/components/BookingCalendar";
 
@@ -279,6 +280,10 @@ export default function ReservationDetailPage() {
             </div>
           </div>
         )}
+
+        <div className="mt-8 pt-6 border-t border-outline/20">
+          <p className="text-sm text-primary font-medium">{VISIT_APPLICATION_NOTICE}</p>
+        </div>
       </main>
     </div>
   );
