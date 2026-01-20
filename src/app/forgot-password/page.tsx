@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import Header from "@/components/Header";
+import { EMAIL_IPARK_PORTAL_NOTICE } from "@/lib/constants";
 
 function ForgotPasswordForm() {
   const searchParams = useSearchParams();
@@ -45,6 +46,7 @@ function ForgotPasswordForm() {
             パスワードをリセット
           </h1>
           <p className="text-sm text-on-background/70 mb-6">
+            {EMAIL_IPARK_PORTAL_NOTICE}
             登録済みのメールアドレスを入力してください。リセット用のリンクをお送りします。
           </p>
 

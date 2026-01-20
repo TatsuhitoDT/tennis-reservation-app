@@ -4,6 +4,7 @@ import { useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { LogIn, UserPlus } from "lucide-react";
 import Link from "next/link";
+import { EMAIL_IPARK_PORTAL_NOTICE } from "@/lib/constants";
 
 type AuthMode = "login" | "signup";
 
@@ -244,6 +245,9 @@ export default function AuthForm() {
             <label className="block text-sm font-medium text-on-background mb-2">
               メールアドレス
             </label>
+            <p className="text-sm text-on-background/70 mb-1.5">
+              {EMAIL_IPARK_PORTAL_NOTICE}
+            </p>
             <input
               type="email"
               value={email}
