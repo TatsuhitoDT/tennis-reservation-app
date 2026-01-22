@@ -50,6 +50,8 @@ export async function POST(request: NextRequest) {
     const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
     
     if (serviceRoleKey) {
+      console.log(`[アカウント削除] サービスロールキーが設定されています。ユーザー ${user.id} を完全に削除します。`)
+      
       // Admin APIを使用してユーザーを完全に削除
       // auth.usersを削除すると、CASCADEでprofilesとreservationsも自動削除される
       const adminClient = createClient(supabaseUrl, serviceRoleKey, {
@@ -62,53 +64,68 @@ export async function POST(request: NextRequest) {
       const { error: deleteError } = await adminClient.auth.admin.deleteUser(user.id)
       
       if (deleteError) {
-        console.error('ユーザー削除エラー:', deleteError)
+        console.error('[アカウント削除] ユーザー削除エラー:', deleteError)
         return NextResponse.json(
           { error: `アカウントの削除に失敗しました: ${deleteError.message}` },
           { status: 500 }
         )
       }
       
-      // 削除成功を確認
+      console.log(`[アカウント削除] ユーザー ${user.id} の削除を実行しました。削除を確認中...`)
+      
+      // 削除成功を確認（少し待ってから確認）
+      await new Promise(resolve => setTimeout(resolve, 1000))
       const { data: deletedUser, error: verifyError } = await adminClient.auth.admin.getUserById(user.id)
+      
       if (!verifyError && deletedUser?.user) {
         // まだユーザーが存在する場合は削除失敗
+        console.error(`[アカウント削除] ユーザー ${user.id} がまだ存在します。`)
         return NextResponse.json(
           { error: 'アカウントの削除に失敗しました。ユーザーがまだ存在します。' },
           { status: 500 }
         )
       }
+      
+      console.log(`[アカウント削除] ユーザー ${user.id} の削除が完了しました。`)
     } else {
       // サービスロールキーがない場合、profilesとreservationsを手動で削除
       // 注意: auth.usersは削除されないため、同じメールアドレスで再登録できない
+      console.warn(`[アカウント削除] 警告: SUPABASE_SERVICE_ROLE_KEYが設定されていません。`)
+      console.warn(`[アカウント削除] ユーザー ${user.id} のprofilesとreservationsのみ削除します。auth.usersは削除されません。`)
       
       // まず予約を削除（profilesより先に削除する必要がある場合がある）
-      const { error: reservationError } = await supabase
+      console.log(`[アカウント削除] 予約データを削除中...`)
+      const { error: reservationError, count: reservationCount } = await supabase
         .from('reservations')
         .delete()
         .eq('user_id', user.id)
+        .select('*', { count: 'exact', head: true })
       
       if (reservationError) {
-        console.error('予約削除エラー:', reservationError)
+        console.error('[アカウント削除] 予約削除エラー:', reservationError)
         return NextResponse.json(
           { error: `予約データの削除に失敗しました: ${reservationError.message}` },
           { status: 500 }
         )
       }
+      console.log(`[アカウント削除] 予約データを削除しました（削除数: ${reservationCount || 0}）`)
       
       // 次にプロフィールを削除
-      const { error: profileError } = await supabase
+      console.log(`[アカウント削除] プロフィールデータを削除中...`)
+      const { error: profileError, count: profileCount } = await supabase
         .from('profiles')
         .delete()
         .eq('id', user.id)
+        .select('*', { count: 'exact', head: true })
       
       if (profileError) {
-        console.error('プロフィール削除エラー:', profileError)
+        console.error('[アカウント削除] プロフィール削除エラー:', profileError)
         return NextResponse.json(
           { error: `プロフィールデータの削除に失敗しました: ${profileError.message}` },
           { status: 500 }
         )
       }
+      console.log(`[アカウント削除] プロフィールデータを削除しました（削除数: ${profileCount || 0}）`)
       
       // 削除を確認
       const { data: remainingProfile } = await supabase
@@ -118,6 +135,7 @@ export async function POST(request: NextRequest) {
         .single()
       
       if (remainingProfile) {
+        console.error(`[アカウント削除] プロフィールがまだ存在します: ${remainingProfile.id}`)
         return NextResponse.json(
           { error: 'プロフィールの削除に失敗しました。データがまだ存在します。' },
           { status: 500 }
@@ -126,9 +144,9 @@ export async function POST(request: NextRequest) {
       
       // 警告: auth.usersは削除されないため、同じメールアドレスで再登録できない
       // 管理者がSupabaseダッシュボードから手動でauth.usersを削除する必要がある
-      console.warn(`ユーザー ${user.id} のprofilesとreservationsを削除しましたが、auth.usersは削除されません。`)
-      console.warn('同じメールアドレスで再登録するには、Supabaseダッシュボードからauth.usersを手動で削除する必要があります。')
-      console.warn('または、Vercelの環境変数にSUPABASE_SERVICE_ROLE_KEYを設定してください。')
+      console.warn(`[アカウント削除] 完了: profilesとreservationsを削除しましたが、auth.usersは削除されません。`)
+      console.warn(`[アカウント削除] 同じメールアドレスで再登録するには、Supabaseダッシュボードからauth.usersを手動で削除する必要があります。`)
+      console.warn(`[アカウント削除] または、Vercelの環境変数にSUPABASE_SERVICE_ROLE_KEYを設定してください。`)
     }
 
     return NextResponse.json({ success: true })
