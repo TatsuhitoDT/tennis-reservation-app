@@ -235,39 +235,28 @@ export default function AuthForm() {
           ? `${process.env.NEXT_PUBLIC_APP_URL}/login`
           : (typeof window !== "undefined" ? window.location.origin : "") + "/login";
       
-      // signUpを再度呼び出すことで認証メールを再送信
-      // 既に登録済みの場合はエラーになるが、その場合は既存の処理で対応
-      const { data, error: signUpError } = await supabase.auth.signUp({
+      // Supabaseのresendメソッドを使用して認証メールを再送信
+      const { data, error: resendError } = await supabase.auth.resend({
+        type: 'signup',
         email: emailNotConfirmed,
-        password: "", // パスワードは不要（既存ユーザーの場合）
         options: {
           emailRedirectTo: redirectTo,
         },
       });
 
-      // 登録済みメールの場合（identities が空）
-      if (data?.user && (!data.user.identities || data.user.identities.length === 0)) {
-        // 認証メールは送信されないが、エラーも出ない
-        // この場合、認証メールの再送信はSupabaseの設定に依存
-        setMessage("認証メールを再送信しました。メールボックスをご確認ください。");
-        setEmailNotConfirmed(null);
-      } else if (signUpError) {
-        // エラーが発生した場合
-        if (/already|registered/i.test(signUpError.message)) {
-          // 既に登録済みの場合、認証メールの再送信を試みる
-          // Supabaseのresendメソッドは認証済みユーザー向けなので、ここではsignUpの結果を確認
-          setMessage("認証メールを再送信しました。メールボックスをご確認ください。");
-          setEmailNotConfirmed(null);
-        } else {
-          throw signUpError;
-        }
-      } else {
-        // 成功した場合
-        setMessage("認証メールを再送信しました。メールボックスをご確認ください。");
-        setEmailNotConfirmed(null);
+      if (resendError) {
+        throw resendError;
       }
+
+      setMessage("認証メールを再送信しました。メールボックスをご確認ください。");
+      setEmailNotConfirmed(null);
     } catch (err: any) {
-      setError(err.message || "認証メールの再送信に失敗しました");
+      // エラーメッセージを日本語に変換
+      let errorMessage = err?.message || "認証メールの再送信に失敗しました";
+      if (/email.*not.*found|Email not found/i.test(errorMessage)) {
+        errorMessage = "このメールアドレスは登録されていません。新規登録を行ってください。";
+      }
+      setError(errorMessage);
     } finally {
       setResendingConfirmation(false);
     }
