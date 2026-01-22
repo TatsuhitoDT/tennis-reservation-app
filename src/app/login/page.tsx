@@ -55,6 +55,23 @@ export default function LoginPage() {
           setRecovering(false);
         });
     }
+    
+    // メールアドレス変更確認（type=email_change）
+    if (type === "email_change" && access_token && refresh_token) {
+      setRecovering(true);
+      supabase.auth
+        .setSession({ access_token, refresh_token })
+        .then(async () => {
+          // セッション設定後、プロフィールページへリダイレクト
+          window.history.replaceState(null, "", window.location.pathname + window.location.search);
+          router.push("/member/profile");
+        })
+        .catch((err: unknown) => {
+          console.error("email_change setSession:", err);
+          setSetPasswordError("メールアドレス変更の確認に失敗しました。リンクの有効期限が切れている可能性があります。");
+          setRecovering(false);
+        });
+    }
   }, [router]);
 
   // 既にログインしており、パスワード設定不要な場合はダッシュボードへ（recovery 処理中は待機）

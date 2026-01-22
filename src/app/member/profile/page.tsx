@@ -23,6 +23,9 @@ export default function ProfilePage() {
     full_name_kana: "",
     phone: "",
   });
+  const [changingEmail, setChangingEmail] = useState(false);
+  const [newEmail, setNewEmail] = useState("");
+  const [emailChangeSent, setEmailChangeSent] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -33,7 +36,26 @@ export default function ProfilePage() {
         loadProfile(session.user.id);
       }
     });
-  }, [router]);
+    
+    // メールアドレス変更確認後の処理
+    if (typeof window !== "undefined") {
+      const hash = window.location.hash?.replace("#", "") || "";
+      if (hash) {
+        const params = new URLSearchParams(hash);
+        const type = params.get("type");
+        if (type === "email_change") {
+          // メールアドレス変更が完了したことを示すメッセージ
+          setMessage("メールアドレスが正常に変更されました。");
+          // URLからハッシュを削除
+          window.history.replaceState(null, "", window.location.pathname + window.location.search);
+          // プロフィールを再読み込み
+          if (user) {
+            loadProfile(user.id);
+          }
+        }
+      }
+    }
+  }, [router, user]);
 
   const loadProfile = async (userId: string) => {
     try {
@@ -86,6 +108,28 @@ export default function ProfilePage() {
       setSaving(false);
     }
   };
+
+  // メールアドレス変更後のプロフィール更新
+  useEffect(() => {
+    const checkEmailChange = async () => {
+      if (user) {
+        const { data: { user: currentUser } } = await supabase.auth.getUser();
+        if (currentUser && currentUser.email && profile && currentUser.email !== profile.email) {
+          // メールアドレスが変更された場合、profilesテーブルも更新
+          try {
+            const { updateProfile } = await import("@/lib/supabase");
+            await updateProfile(user.id, {
+              email: currentUser.email,
+            });
+            await loadProfile(user.id);
+          } catch (error) {
+            console.error("Failed to update profile email:", error);
+          }
+        }
+      }
+    };
+    checkEmailChange();
+  }, [user, profile]);
 
   const handleDeleteAccount = async () => {
     if (!user) return;
@@ -164,22 +208,126 @@ export default function ProfilePage() {
         </div>
 
         <form onSubmit={handleSave} className="card space-y-6">
-          {/* メールアドレス（表示のみ） */}
+          {/* メールアドレス */}
           {profile?.email && (
             <div>
               <label className="block text-sm font-medium text-on-background mb-2 flex items-center gap-2">
                 <Mail className="w-4 h-4" />
                 メールアドレス
               </label>
-              <input
-                type="email"
-                value={profile.email}
-                disabled
-                className="input bg-surface cursor-not-allowed"
-              />
-              <p className="text-xs text-on-background/60 mt-1">
-                メールアドレスは変更できません
-              </p>
+              {!changingEmail && !emailChangeSent ? (
+                <>
+                  <input
+                    type="email"
+                    value={profile.email}
+                    disabled
+                    className="input bg-surface cursor-not-allowed"
+                  />
+                  <div className="flex items-center gap-2 mt-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setChangingEmail(true);
+                        setNewEmail("");
+                        setError(null);
+                        setMessage(null);
+                      }}
+                      className="text-sm text-primary-accent hover:underline"
+                    >
+                      メールアドレスを変更
+                    </button>
+                  </div>
+                </>
+              ) : emailChangeSent ? (
+                <>
+                  <input
+                    type="email"
+                    value={profile.email}
+                    disabled
+                    className="input bg-surface cursor-not-allowed"
+                  />
+                  <div className="mt-2 p-3 bg-primary/10 border border-primary text-primary rounded-lg text-sm">
+                    <p className="mb-2">
+                      <strong>{newEmail}</strong> に確認メールを送信しました。
+                    </p>
+                    <p>
+                      新しいメールアドレスに届いた確認リンクをクリックして、メールアドレス変更を完了してください。
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setChangingEmail(false);
+                      setEmailChangeSent(false);
+                      setNewEmail("");
+                    }}
+                    className="text-sm text-primary-accent hover:underline mt-2"
+                  >
+                    キャンセル
+                  </button>
+                </>
+              ) : (
+                <>
+                  <input
+                    type="email"
+                    value={profile.email}
+                    disabled
+                    className="input bg-surface cursor-not-allowed mb-2"
+                  />
+                  <input
+                    type="email"
+                    value={newEmail}
+                    onChange={(e) => setNewEmail(e.target.value)}
+                    className="input"
+                    placeholder="新しいメールアドレス"
+                    required
+                  />
+                  <div className="flex items-center gap-2 mt-2">
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        if (!newEmail || !user) return;
+                        if (newEmail === profile.email) {
+                          setError("現在のメールアドレスと同じです");
+                          return;
+                        }
+                        setChangingEmail(false);
+                        setError(null);
+                        setMessage(null);
+                        try {
+                          const redirectTo =
+                            process.env.NEXT_PUBLIC_APP_URL 
+                              ? `${process.env.NEXT_PUBLIC_APP_URL}/login`
+                              : (typeof window !== "undefined" ? window.location.origin : "") + "/login";
+                          const { error: updateError } = await supabase.auth.updateUser(
+                            { email: newEmail },
+                            { emailRedirectTo: redirectTo }
+                          );
+                          if (updateError) throw updateError;
+                          setEmailChangeSent(true);
+                        } catch (err: any) {
+                          setError(err.message || "メールアドレスの変更に失敗しました");
+                          setChangingEmail(false);
+                        }
+                      }}
+                      className="btn-primary text-sm"
+                    >
+                      変更メールを送信
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setChangingEmail(false);
+                        setNewEmail("");
+                        setError(null);
+                      }}
+                      className="btn-secondary text-sm"
+                    >
+                      キャンセル
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           )}
 
