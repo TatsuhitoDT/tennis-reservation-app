@@ -127,51 +127,41 @@ export default function AuthForm() {
 
         // ログイン失敗時、削除済みユーザーまたはメール未認証の可能性をチェック
         if (signInError) {
-          // メール未認証エラーのチェック
-          if (signInError.message && /email.*not.*confirm|Email not confirmed/i.test(signInError.message)) {
-            // プロフィールが存在するか確認（メール未認証だが登録済みの可能性）
-            try {
-              const { data: profileData } = await supabase
-                .from("profiles")
-                .select("id")
-                .eq("email", email)
-                .single();
-
-              if (profileData) {
-                // プロフィールが存在する場合、メール未認証の可能性が高い
-                setEmailNotConfirmed(email);
-                setError(null);
-                setMessage(null);
-                setLoading(false);
-                return;
-              }
-            } catch (err) {
-              console.error("プロフィール確認エラー:", err);
-            }
-          }
-
-          // メールアドレスでprofilesテーブルを検索
-          // 削除済みユーザーはauth.usersに存在するがprofilesに存在しない
+          // メールアドレスでprofilesテーブルを検索（先に確認）
+          let profileExists = false;
           try {
             const { data: profileData } = await supabase
               .from("profiles")
               .select("id")
               .eq("email", email)
               .single();
-
-            // profilesに存在しない場合、削除済みユーザーの可能性
-            if (!profileData) {
-              // auth.usersに存在するか確認（Admin APIは使えないので、別の方法で確認）
-              // ログインエラーが「Invalid login credentials」の場合、auth.usersに存在する可能性がある
-              if (signInError.message && /invalid.*credentials/i.test(signInError.message)) {
-                setError("このアカウントは登録が完了していません。新規登録を行ってください。");
-                setLoading(false);
-                return;
-              }
-            }
+            profileExists = !!profileData;
           } catch (err) {
-            // エラーがあっても通常のエラーメッセージを表示
+            // プロフィールが存在しない場合も続行
             console.error("プロフィール確認エラー:", err);
+          }
+
+          // メール未認証エラーのチェック
+          if (signInError.message && /email.*not.*confirm|Email not confirmed/i.test(signInError.message)) {
+            if (profileExists) {
+              // プロフィールが存在する場合、メール未認証の可能性が高い
+              setEmailNotConfirmed(email);
+              setError(null);
+              setMessage(null);
+              setLoading(false);
+              return;
+            }
+          }
+
+          // profilesに存在しない場合、削除済みユーザーの可能性
+          if (!profileExists) {
+            // auth.usersに存在するか確認（Admin APIは使えないので、別の方法で確認）
+            // ログインエラーが「Invalid login credentials」の場合、auth.usersに存在する可能性がある
+            if (signInError.message && /invalid.*credentials/i.test(signInError.message)) {
+              setError("このアカウントは登録が完了していません。新規登録を行ってください。");
+              setLoading(false);
+              return;
+            }
           }
           
           // 通常のログインエラー
@@ -208,12 +198,33 @@ export default function AuthForm() {
     } catch (err: any) {
       // エラーメッセージを日本語に変換
       let errorMessage = err?.message || "エラーが発生しました";
-      if (/A user with this email address has already been registered/i.test(errorMessage)) {
+      
+      // メール未認証エラーの場合、プロフィールの存在を確認して再送信ボタンを表示
+      if (/email.*not.*confirm|Email not confirmed/i.test(errorMessage)) {
+        // プロフィールが存在するか確認
+        try {
+          const { data: profileData } = await supabase
+            .from("profiles")
+            .select("id")
+            .eq("email", email)
+            .single();
+
+          if (profileData) {
+            // プロフィールが存在する場合、メール未認証の可能性が高い
+            setEmailNotConfirmed(email);
+            setError(null);
+            setLoading(false);
+            return;
+          }
+        } catch (profileErr) {
+          console.error("プロフィール確認エラー:", profileErr);
+        }
+        // プロフィールが存在しない場合、通常のエラーメッセージを表示
+        errorMessage = "メールアドレスが確認されていません。認証メールを再送信してください。";
+      } else if (/A user with this email address has already been registered/i.test(errorMessage)) {
         errorMessage = "このメールアドレスは既に登録されています。";
       } else if (/already been registered|already registered/i.test(errorMessage)) {
         errorMessage = "このメールアドレスは既に登録されています。";
-      } else if (/email.*not.*confirm|Email not confirmed/i.test(errorMessage)) {
-        errorMessage = "メールアドレスが確認されていません。認証メールを再送信してください。";
       }
       setError(errorMessage);
     } finally {
