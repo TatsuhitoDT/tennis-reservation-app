@@ -211,11 +211,18 @@ export default function ProfilePage() {
                 <div className="flex items-center gap-2 mt-2">
                   <button
                     type="button"
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      console.log("メールアドレス変更ボタンがクリックされました");
+                      console.log("現在のuser:", user);
+                      console.log("現在のprofile:", profile);
+                      console.log("changingEmail 変更前:", changingEmail);
                       setChangingEmail(true);
                       setNewEmail("");
                       setError(null);
                       setMessage(null);
+                      console.log("changingEmail 変更後: true (非同期)");
                     }}
                     className="text-sm text-primary-accent hover:underline"
                   >
