@@ -44,11 +44,19 @@ export default function MyPage() {
       const { getProfile } = await import("@/lib/supabase");
       const data = await getProfile(userId);
       setProfile(data);
-      setFormData({
-        full_name: data.full_name || "",
-        full_name_kana: data.full_name_kana || "",
-        phone: data.phone || "",
-      });
+      if (data) {
+        setFormData({
+          full_name: data.full_name || "",
+          full_name_kana: data.full_name_kana || "",
+          phone: data.phone || "",
+        });
+      } else {
+        setFormData({
+          full_name: "",
+          full_name_kana: "",
+          phone: "",
+        });
+      }
     } catch (error) {
       console.error("Failed to load profile:", error);
     }
