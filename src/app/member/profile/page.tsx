@@ -195,128 +195,126 @@ export default function ProfilePage() {
 
         <form onSubmit={handleSave} className="card space-y-6">
           {/* メールアドレス */}
-          {(profile?.email || user?.email) && (
-            <div>
-              <label className="block text-sm font-medium text-on-background mb-2 flex items-center gap-2">
-                <Mail className="w-4 h-4" />
-                メールアドレス
-              </label>
-              {!changingEmail && !emailChangeSent ? (
-                <>
-                  <input
-                    type="email"
-                    value={profile?.email || user?.email || ""}
-                    disabled
-                    className="input bg-surface cursor-not-allowed"
-                  />
-                  <div className="flex items-center gap-2 mt-2">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setChangingEmail(true);
-                        setNewEmail("");
-                        setError(null);
-                        setMessage(null);
-                      }}
-                      className="text-sm text-primary-accent hover:underline"
-                    >
-                      メールアドレスを変更
-                    </button>
-                  </div>
-                </>
-              ) : emailChangeSent ? (
-                <>
-                  <input
-                    type="email"
-                    value={profile?.email || user?.email || ""}
-                    disabled
-                    className="input bg-surface cursor-not-allowed"
-                  />
-                  <div className="mt-2 p-3 bg-primary/10 border border-primary text-primary rounded-lg text-sm">
-                    <p className="mb-2">
-                      <strong>{newEmail}</strong> に確認メールを送信しました。
-                    </p>
-                    <p>
-                      新しいメールアドレスに届いた確認リンクをクリックして、メールアドレス変更を完了してください。
-                    </p>
-                  </div>
+          <div>
+            <label className="block text-sm font-medium text-on-background mb-2 flex items-center gap-2">
+              <Mail className="w-4 h-4" />
+              メールアドレス
+            </label>
+            {!changingEmail && !emailChangeSent ? (
+              <>
+                <input
+                  type="email"
+                  value={user?.email || profile?.email || ""}
+                  disabled
+                  className="input bg-surface cursor-not-allowed"
+                />
+                <div className="flex items-center gap-2 mt-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setChangingEmail(true);
+                      setNewEmail("");
+                      setError(null);
+                      setMessage(null);
+                    }}
+                    className="text-sm text-primary-accent hover:underline"
+                  >
+                    メールアドレスを変更
+                  </button>
+                </div>
+              </>
+            ) : emailChangeSent ? (
+              <>
+                <input
+                  type="email"
+                  value={user?.email || profile?.email || ""}
+                  disabled
+                  className="input bg-surface cursor-not-allowed"
+                />
+                <div className="mt-2 p-3 bg-primary/10 border border-primary text-primary rounded-lg text-sm">
+                  <p className="mb-2">
+                    <strong>{newEmail}</strong> に確認メールを送信しました。
+                  </p>
+                  <p>
+                    新しいメールアドレスに届いた確認リンクをクリックして、メールアドレス変更を完了してください。
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setChangingEmail(false);
+                    setEmailChangeSent(false);
+                    setNewEmail("");
+                  }}
+                  className="text-sm text-primary-accent hover:underline mt-2"
+                >
+                  キャンセル
+                </button>
+              </>
+            ) : (
+              <>
+                <input
+                  type="email"
+                  value={user?.email || profile?.email || ""}
+                  disabled
+                  className="input bg-surface cursor-not-allowed mb-2"
+                />
+                <input
+                  type="email"
+                  value={newEmail}
+                  onChange={(e) => setNewEmail(e.target.value)}
+                  className="input"
+                  placeholder="新しいメールアドレス"
+                  required
+                />
+                <div className="flex items-center gap-2 mt-2">
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      if (!newEmail || !user) return;
+                      const currentEmail = user?.email || profile?.email;
+                      if (newEmail === currentEmail) {
+                        setError("現在のメールアドレスと同じです");
+                        return;
+                      }
+                      setChangingEmail(false);
+                      setError(null);
+                      setMessage(null);
+                      try {
+                        const redirectTo =
+                          process.env.NEXT_PUBLIC_APP_URL 
+                            ? `${process.env.NEXT_PUBLIC_APP_URL}/login`
+                            : (typeof window !== "undefined" ? window.location.origin : "") + "/login";
+                        const { error: updateError } = await supabase.auth.updateUser(
+                          { email: newEmail },
+                          { emailRedirectTo: redirectTo }
+                        );
+                        if (updateError) throw updateError;
+                        setEmailChangeSent(true);
+                      } catch (err: any) {
+                        setError(err.message || "メールアドレスの変更に失敗しました");
+                        setChangingEmail(false);
+                      }
+                    }}
+                    className="btn-primary text-sm"
+                  >
+                    変更メールを送信
+                  </button>
                   <button
                     type="button"
                     onClick={() => {
                       setChangingEmail(false);
-                      setEmailChangeSent(false);
                       setNewEmail("");
+                      setError(null);
                     }}
-                    className="text-sm text-primary-accent hover:underline mt-2"
+                    className="btn-secondary text-sm"
                   >
                     キャンセル
                   </button>
-                </>
-              ) : (
-                <>
-                  <input
-                    type="email"
-                    value={profile?.email || user?.email || ""}
-                    disabled
-                    className="input bg-surface cursor-not-allowed mb-2"
-                  />
-                  <input
-                    type="email"
-                    value={newEmail}
-                    onChange={(e) => setNewEmail(e.target.value)}
-                    className="input"
-                    placeholder="新しいメールアドレス"
-                    required
-                  />
-                  <div className="flex items-center gap-2 mt-2">
-                    <button
-                      type="button"
-                      onClick={async () => {
-                        if (!newEmail || !user) return;
-                        const currentEmail = profile?.email || user.email;
-                        if (newEmail === currentEmail) {
-                          setError("現在のメールアドレスと同じです");
-                          return;
-                        }
-                        setChangingEmail(false);
-                        setError(null);
-                        setMessage(null);
-                        try {
-                          const redirectTo =
-                            process.env.NEXT_PUBLIC_APP_URL 
-                              ? `${process.env.NEXT_PUBLIC_APP_URL}/login`
-                              : (typeof window !== "undefined" ? window.location.origin : "") + "/login";
-                          const { error: updateError } = await supabase.auth.updateUser(
-                            { email: newEmail },
-                            { emailRedirectTo: redirectTo }
-                          );
-                          if (updateError) throw updateError;
-                          setEmailChangeSent(true);
-                        } catch (err: any) {
-                          setError(err.message || "メールアドレスの変更に失敗しました");
-                          setChangingEmail(false);
-                        }
-                      }}
-                      className="btn-primary text-sm"
-                    >
-                      変更メールを送信
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setChangingEmail(false);
-                        setNewEmail("");
-                        setError(null);
-                      }}
-                      className="btn-secondary text-sm"
-                    >
-                      キャンセル
-                    </button>
-                  </div>
-                </>
-              )}
-            </div>
-          )}
+                </div>
+              </>
+            )}
+          </div>
 
           {/* 氏名 */}
           <div>
