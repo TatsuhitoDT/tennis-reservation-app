@@ -501,8 +501,22 @@ export default function AuthForm() {
           )}
 
           {error && (
-            <div className="bg-highlight/10 border border-highlight text-highlight px-4 py-3 rounded-lg text-sm">
-              {error}
+            <div className="bg-highlight/10 border border-highlight text-highlight px-4 py-3 rounded-lg text-sm space-y-2">
+              <p>{error}</p>
+              {/メールアドレスが確認されていません|認証メールを再送信/i.test(error) && email && (
+                <button
+                  type="button"
+                  onClick={async () => {
+                    setEmailNotConfirmed(email);
+                    setError(null);
+                    await handleResendConfirmation();
+                  }}
+                  disabled={resendingConfirmation}
+                  className="btn-primary text-sm mt-2"
+                >
+                  {resendingConfirmation ? "送信中..." : "認証メールを再送信"}
+                </button>
+              )}
             </div>
           )}
 
