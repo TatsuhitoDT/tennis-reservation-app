@@ -195,7 +195,7 @@ export default function ProfilePage() {
 
         <form onSubmit={handleSave} className="card space-y-6">
           {/* メールアドレス */}
-          {profile?.email && (
+          {(profile?.email || user?.email) && (
             <div>
               <label className="block text-sm font-medium text-on-background mb-2 flex items-center gap-2">
                 <Mail className="w-4 h-4" />
@@ -205,7 +205,7 @@ export default function ProfilePage() {
                 <>
                   <input
                     type="email"
-                    value={profile.email}
+                    value={profile?.email || user?.email || ""}
                     disabled
                     className="input bg-surface cursor-not-allowed"
                   />
@@ -228,7 +228,7 @@ export default function ProfilePage() {
                 <>
                   <input
                     type="email"
-                    value={profile.email}
+                    value={profile?.email || user?.email || ""}
                     disabled
                     className="input bg-surface cursor-not-allowed"
                   />
@@ -256,7 +256,7 @@ export default function ProfilePage() {
                 <>
                   <input
                     type="email"
-                    value={profile.email}
+                    value={profile?.email || user?.email || ""}
                     disabled
                     className="input bg-surface cursor-not-allowed mb-2"
                   />
@@ -273,7 +273,8 @@ export default function ProfilePage() {
                       type="button"
                       onClick={async () => {
                         if (!newEmail || !user) return;
-                        if (newEmail === profile.email) {
+                        const currentEmail = profile?.email || user.email;
+                        if (newEmail === currentEmail) {
                           setError("現在のメールアドレスと同じです");
                           return;
                         }
