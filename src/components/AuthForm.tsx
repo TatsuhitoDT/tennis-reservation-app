@@ -490,7 +490,7 @@ export default function AuthForm() {
               <p>メールアドレスが確認されていません。認証メールを再送信してください。</p>
               <button
                 type="button"
-                onClick={handleResendConfirmation}
+                onClick={() => handleResendConfirmation()}
                 disabled={resendingConfirmation}
                 className="btn-primary text-sm"
               >
