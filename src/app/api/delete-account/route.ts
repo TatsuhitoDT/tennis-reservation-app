@@ -95,11 +95,11 @@ export async function POST(request: NextRequest) {
       
       // まず予約を削除（profilesより先に削除する必要がある場合がある）
       console.log(`[アカウント削除] 予約データを削除中...`)
-      const { error: reservationError, count: reservationCount } = await supabase
+      const { data: deletedReservations, error: reservationError } = await supabase
         .from('reservations')
         .delete()
         .eq('user_id', user.id)
-        .select('*', { count: 'exact', head: true })
+        .select()
       
       if (reservationError) {
         console.error('[アカウント削除] 予約削除エラー:', reservationError)
@@ -108,15 +108,15 @@ export async function POST(request: NextRequest) {
           { status: 500 }
         )
       }
-      console.log(`[アカウント削除] 予約データを削除しました（削除数: ${reservationCount || 0}）`)
+      console.log(`[アカウント削除] 予約データを削除しました（削除数: ${deletedReservations?.length || 0}）`)
       
       // 次にプロフィールを削除
       console.log(`[アカウント削除] プロフィールデータを削除中...`)
-      const { error: profileError, count: profileCount } = await supabase
+      const { data: deletedProfiles, error: profileError } = await supabase
         .from('profiles')
         .delete()
         .eq('id', user.id)
-        .select('*', { count: 'exact', head: true })
+        .select()
       
       if (profileError) {
         console.error('[アカウント削除] プロフィール削除エラー:', profileError)
@@ -125,7 +125,7 @@ export async function POST(request: NextRequest) {
           { status: 500 }
         )
       }
-      console.log(`[アカウント削除] プロフィールデータを削除しました（削除数: ${profileCount || 0}）`)
+      console.log(`[アカウント削除] プロフィールデータを削除しました（削除数: ${deletedProfiles?.length || 0}）`)
       
       // 削除を確認
       const { data: remainingProfile } = await supabase
