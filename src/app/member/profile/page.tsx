@@ -207,13 +207,13 @@ export default function ProfilePage() {
             </label>
             {!changingEmail && !emailChangeSent ? (
               <>
-                <input
-                  type="email"
-                  value={user?.email || profile?.email || ""}
-                  disabled
-                  className="input bg-surface cursor-not-allowed"
-                />
-                <div className="flex items-center gap-2 mt-2">
+                <div className="flex items-center gap-2">
+                  <input
+                    type="email"
+                    value={user?.email || profile?.email || ""}
+                    disabled
+                    className="input bg-surface cursor-not-allowed flex-1"
+                  />
                   <button
                     type="button"
                     onClick={(e) => {
@@ -229,7 +229,7 @@ export default function ProfilePage() {
                       setMessage(null);
                       console.log("changingEmail 変更後: true (非同期)");
                     }}
-                    className="text-sm text-primary-accent hover:underline"
+                    className="btn-secondary text-sm whitespace-nowrap"
                   >
                     メールアドレスを変更
                   </button>
