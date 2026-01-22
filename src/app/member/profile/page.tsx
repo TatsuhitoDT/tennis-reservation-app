@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { type Profile } from "@/lib/supabase";
 import Header from "@/components/Header";
-import { User, Save, Mail, Phone } from "lucide-react";
+import { User, Save, Mail, Phone, Trash2, AlertTriangle } from "lucide-react";
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -13,6 +13,8 @@ export default function ProfilePage() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
 
@@ -82,6 +84,60 @@ export default function ProfilePage() {
       setError(error.message || "更新に失敗しました");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!user) return;
+
+    // 2段階確認
+    const confirm1 = window.confirm(
+      "アカウントを削除すると、すべてのデータ（プロフィール、予約履歴など）が永久に削除されます。\n\nこの操作は取り消せません。本当に削除しますか？"
+    );
+    if (!confirm1) return;
+
+    const confirm2 = window.confirm(
+      "最終確認：アカウントを削除してもよろしいですか？\n\n「OK」を押すと、アカウントは即座に削除されます。"
+    );
+    if (!confirm2) return;
+
+    setDeleting(true);
+    setError(null);
+
+    try {
+      // セッションからトークンを取得
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error("セッションが見つかりません");
+      }
+
+      // API Routeを呼び出してアカウントを削除
+      const response = await fetch("/api/delete-account", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId: user.id,
+          accessToken: session.access_token,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "アカウントの削除に失敗しました");
+      }
+
+      // ログアウトしてトップページにリダイレクト
+      await supabase.auth.signOut();
+      router.push("/");
+      
+      // ページをリロードして完全にログアウト状態にする
+      window.location.href = "/";
+    } catch (error: any) {
+      setError(error.message || "アカウントの削除に失敗しました");
+      setDeleting(false);
     }
   };
 
@@ -204,6 +260,29 @@ export default function ProfilePage() {
             </button>
           </div>
         </form>
+
+        {/* アカウント削除セクション */}
+        <div className="card mt-8 border-t border-outline/20 pt-6">
+          <div className="mb-4">
+            <h3 className="text-lg font-bold text-highlight mb-2 flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5" />
+              危険な操作
+            </h3>
+            <p className="text-sm text-on-background/70 mb-4">
+              アカウントを削除すると、すべてのデータ（プロフィール情報、予約履歴など）が永久に削除されます。
+              この操作は取り消せません。
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={handleDeleteAccount}
+            disabled={deleting}
+            className="btn-danger flex items-center gap-2"
+          >
+            <Trash2 className="w-4 h-4" />
+            {deleting ? "削除中..." : "アカウントを削除"}
+          </button>
+        </div>
       </main>
     </div>
   );
