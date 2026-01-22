@@ -101,12 +101,40 @@ export default function AuthForm() {
           setMessage("アカウントを作成しました。メールを確認してください。");
         }
       } else {
-        const { error: signInError } = await supabase.auth.signInWithPassword({
+        const { error: signInError, data: signInData } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
 
-        if (signInError) throw signInError;
+        // ログイン失敗時、削除済みユーザーの可能性をチェック
+        if (signInError) {
+          // メールアドレスでprofilesテーブルを検索
+          // 削除済みユーザーはauth.usersに存在するがprofilesに存在しない
+          try {
+            const { data: profileData } = await supabase
+              .from("profiles")
+              .select("id")
+              .eq("email", email)
+              .single();
+
+            // profilesに存在しない場合、削除済みユーザーの可能性
+            if (!profileData) {
+              // auth.usersに存在するか確認（Admin APIは使えないので、別の方法で確認）
+              // ログインエラーが「Invalid login credentials」の場合、auth.usersに存在する可能性がある
+              if (signInError.message && /invalid.*credentials/i.test(signInError.message)) {
+                setError("このアカウントは登録が完了していません。新規登録を行ってください。");
+                setLoading(false);
+                return;
+              }
+            }
+          } catch (err) {
+            // エラーがあっても通常のエラーメッセージを表示
+            console.error("プロフィール確認エラー:", err);
+          }
+          
+          // 通常のログインエラー
+          throw signInError;
+        }
 
         // ログイン成功後、プロフィールの存在確認
         try {
