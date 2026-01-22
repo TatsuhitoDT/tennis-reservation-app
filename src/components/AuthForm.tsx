@@ -45,6 +45,9 @@ export default function AuthForm() {
           process.env.NEXT_PUBLIC_APP_URL 
             ? `${process.env.NEXT_PUBLIC_APP_URL}/login`
             : (typeof window !== "undefined" ? window.location.origin : "") + "/login";
+        console.log("[新規登録] 開始:", email);
+        console.log("[新規登録] リダイレクト先:", redirectTo);
+        
         const { data, error: signUpError } = await supabase.auth.signUp({
           email,
           password,
@@ -56,6 +59,12 @@ export default function AuthForm() {
               phone: phone,
             },
           },
+        });
+
+        console.log("[新規登録] レスポンス:", { 
+          user: data?.user?.id, 
+          session: !!data?.session, 
+          error: signUpError?.message 
         });
 
         // 登録済みメール: エラー「User already registered」「Email address ... is invalid」または identities が空
@@ -235,7 +244,10 @@ export default function AuthForm() {
   // 認証メールを再送信
   const handleResendConfirmation = async (emailToResend?: string) => {
     const targetEmail = emailToResend || emailNotConfirmed;
-    if (!targetEmail) return;
+    if (!targetEmail) {
+      setError("メールアドレスが指定されていません。");
+      return;
+    }
 
     setResendingConfirmation(true);
     setError(null);
@@ -247,6 +259,9 @@ export default function AuthForm() {
           ? `${process.env.NEXT_PUBLIC_APP_URL}/login`
           : (typeof window !== "undefined" ? window.location.origin : "") + "/login";
       
+      console.log("[認証メール再送信] 開始:", targetEmail);
+      console.log("[認証メール再送信] リダイレクト先:", redirectTo);
+      
       // Supabaseのresendメソッドを使用して認証メールを再送信
       // このメソッドは即座にメール送信リクエストをSupabaseに送信します
       const { data, error: resendError } = await supabase.auth.resend({
@@ -257,21 +272,30 @@ export default function AuthForm() {
         },
       });
 
+      console.log("[認証メール再送信] レスポンス:", { data, error: resendError });
+
       if (resendError) {
+        console.error("[認証メール再送信] エラー:", resendError);
         throw resendError;
       }
 
       // メール送信リクエストは成功しました
       // メールは通常数秒〜数分以内に届きます
-      setMessage("認証メールを送信しました。通常、数秒〜数分以内にメールが届きます。メールボックス（迷惑メールフォルダも含む）をご確認ください。");
+      console.log("[認証メール再送信] 成功");
+      setMessage("認証メールを送信しました。通常、数秒〜数分以内にメールが届きます。メールボックス（迷惑メールフォルダも含む）をご確認ください。届かない場合は、Supabaseの設定を確認してください。");
       if (emailNotConfirmed) {
         setEmailNotConfirmed(null);
       }
     } catch (err: any) {
+      console.error("[認証メール再送信] 例外:", err);
       // エラーメッセージを日本語に変換
       let errorMessage = err?.message || "認証メールの再送信に失敗しました";
       if (/email.*not.*found|Email not found/i.test(errorMessage)) {
         errorMessage = "このメールアドレスは登録されていません。新規登録を行ってください。";
+      } else if (/rate.*limit|too many requests/i.test(errorMessage)) {
+        errorMessage = "送信回数が多すぎます。しばらく待ってから再度お試しください。";
+      } else if (/email.*disabled|Email disabled/i.test(errorMessage)) {
+        errorMessage = "メール送信機能が無効になっています。管理者にお問い合わせください。";
       }
       setError(errorMessage);
     } finally {
