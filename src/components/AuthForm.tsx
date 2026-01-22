@@ -36,10 +36,13 @@ export default function AuthForm() {
           setLoading(false);
           return;
         }
+        const redirectTo =
+          (typeof window !== "undefined" ? window.location.origin : "") + "/login";
         const { data, error: signUpError } = await supabase.auth.signUp({
           email,
           password,
           options: {
+            emailRedirectTo: redirectTo,
             data: {
               full_name: fullName,
               full_name_kana: fullNameKana,

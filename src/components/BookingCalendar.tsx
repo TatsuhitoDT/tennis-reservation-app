@@ -1,40 +1,45 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { format, addWeeks, startOfWeek, addDays } from "date-fns";
+import { useEffect, useState, useCallback } from "react";
+import { addDays, startOfWeek, format, parseISO, isSameDay } from "date-fns";
 import { ja } from "date-fns/locale/ja";
-import {
-  getReservationsByDate,
-  createReservation,
-  getCourts,
-  type Reservation,
-  type Court,
-} from "@/lib/supabase";
-import { isBookableDate, generateTimeSlots, formatTime } from "@/lib/dateUtils";
-import { CheckCircle, XCircle } from "lucide-react";
+import { getCourts, type Court, getReservationsByDate, createReservation } from "@/lib/supabase";
+import { isBookableDate, generateTimeSlots, formatDate } from "@/lib/dateUtils";
+import { Calendar, Clock } from "lucide-react";
 
 interface BookingCalendarProps {
-  userId: string;
-  onTimeSelect?: (date: string | null, startTime: string | null, endTime: string | null, courtId?: string) => void;
-  selectionMode?: boolean; // trueの場合、予約作成せずに選択のみ
-  selectedCourtId?: string; // 選択中のコートID（選択モード時）
+  userId?: string;
+  selectionMode?: boolean;
+  selectedCourtId?: string;
+  onTimeSelect?: (date: string | null, start: string | null, end: string | null) => void;
 }
 
-export default function BookingCalendar({ userId, onTimeSelect, selectionMode = false, selectedCourtId }: BookingCalendarProps) {
-  const [currentWeek, setCurrentWeek] = useState(new Date());
-  const [selectedDate, setSelectedDate] = useState<string | null>(null);
-  const [selectedTime, setSelectedTime] = useState<string | null>(null);
-  const [selectedCourt, setSelectedCourt] = useState<string>("");
+type SelectedSlot = {
+  date: string;
+  start: string;
+  end: string;
+  courtId: string;
+};
+
+export default function BookingCalendar({
+  userId,
+  selectionMode = false,
+  selectedCourtId: initialSelectedCourtId,
+  onTimeSelect,
+}: BookingCalendarProps) {
   const [courts, setCourts] = useState<Court[]>([]);
-  const [reservations, setReservations] = useState<Record<string, Reservation[]>>({});
-  const [loading, setLoading] = useState(false);
+  const [selectedCourtId, setSelectedCourtId] = useState<string>("");
+  const [weekStart, setWeekStart] = useState<Date>(() => {
+    const today = new Date();
+    return startOfWeek(today, { weekStartsOn: 1 }); // 月曜始まり
+  });
+  const [reservations, setReservations] = useState<Map<string, any[]>>(new Map());
+  const [selectedSlots, setSelectedSlots] = useState<SelectedSlot[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const weekStart = startOfWeek(currentWeek, { weekStartsOn: 1 }); // 月曜始まり
-  const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
-
-  /** 選択中の枠（確定前）。通常モード時のみ使用。1日2枠・1週間2枠の制限あり。 */
-  const [selectedSlots, setSelectedSlots] = useState<{ date: string; time: string; courtId: string }[]>([]);
+  const timeSlots = generateTimeSlots();
 
   // コート一覧を読み込む
   useEffect(() => {
@@ -43,164 +48,184 @@ export default function BookingCalendar({ userId, onTimeSelect, selectionMode = 
         const courtsData = await getCourts();
         setCourts(courtsData);
         if (courtsData.length > 0) {
-          // 選択モードの場合はselectedCourtIdを使用、それ以外は最初のコートを選択
-          const initialCourtId = selectedCourtId || courtsData[0].id;
-          setSelectedCourt(initialCourtId);
+          if (initialSelectedCourtId) {
+            setSelectedCourtId(initialSelectedCourtId);
+          } else {
+            setSelectedCourtId(courtsData[0].id);
+          }
         }
-      } catch (err) {
-        console.error("Failed to load courts:", err);
+      } catch (error) {
+        console.error("Failed to load courts:", error);
       }
     };
     loadCourts();
-  }, [selectedCourtId]);
+  }, [initialSelectedCourtId]);
 
+  // 予約データを読み込む
   const loadReservations = useCallback(async () => {
-    if (!selectedCourt) return;
+    if (!selectedCourtId) return;
     
-    const dates = weekDays.map((d) => format(d, "yyyy-MM-dd"));
-    const allReservations: Record<string, Reservation[]> = {};
+    try {
+      setLoading(true);
+      const weekDates = Array.from({ length: 7 }, (_, i) => {
+        const date = addDays(weekStart, i);
+        return format(date, "yyyy-MM-dd");
+      });
 
-    for (const date of dates) {
-      try {
-        const res = await getReservationsByDate(date, selectedCourt);
-        allReservations[date] = res;
-      } catch (err) {
-        console.error(`Failed to load reservations for ${date}:`, err);
-        allReservations[date] = [];
+      const reservationsMap = new Map<string, any[]>();
+      for (const date of weekDates) {
+        const data = await getReservationsByDate(date, selectedCourtId);
+        reservationsMap.set(date, data);
       }
+      setReservations(reservationsMap);
+    } catch (error) {
+      console.error("Failed to load reservations:", error);
+    } finally {
+      setLoading(false);
     }
-
-    setReservations(allReservations);
-  }, [weekDays, selectedCourt]);
+  }, [weekStart, selectedCourtId]);
 
   useEffect(() => {
     loadReservations();
   }, [loadReservations]);
 
-  const handleTimeSlotClick = (dateStr: string, time: string) => {
-    if (!isBookableDate(dateStr)) {
-      setError("土曜・日曜・祝日のみ予約可能です");
-      return;
-    }
-    if (!selectedCourt) {
-      setError("コートを選択してください");
-      return;
-    }
-
-    // --- 選択モード（予約変更など）: 1枠のみ選択、再押下でキャンセル ---
-    if (selectionMode && onTimeSelect) {
-      const already = selectedDate === dateStr && selectedTime === time;
-      if (already) {
-        setSelectedDate(null);
-        setSelectedTime(null);
-        onTimeSelect(null, null, null);
-        setError(null);
-        return;
-      }
-      setSelectedDate(dateStr);
-      setSelectedTime(time);
-      setError(null);
-      const endTime = `${(parseInt(time.split(":")[0]) + 1).toString().padStart(2, "0")}:00`;
-      onTimeSelect(dateStr, time, endTime, selectedCourt);
-      return;
-    }
-
-    // --- 通常モード: 選択のトグル、1日2枠・1週間2枠の制限 ---
-    const key = { date: dateStr, time, courtId: selectedCourt };
-    const isIn = selectedSlots.some((s) => s.date === dateStr && s.time === time && s.courtId === selectedCourt);
-
-    if (isIn) {
-      // 再押下でキャンセル
-      setSelectedSlots((prev) => prev.filter((s) => !(s.date === dateStr && s.time === time && s.courtId === selectedCourt)));
-      setError(null);
-      return;
-    }
-
-    if (isTimeSlotBooked(dateStr, time)) {
-      setError("この枠はすでに予約済みです");
-      return;
-    }
-
-    // 1日2枠: 既存予約の枠数 + 同日の選択数 < 2
-    const existingSlots = Math.floor(getUserBookedMinutesForDate(dateStr) / 60);
-    const selectedThatDay = selectedSlots.filter((s) => s.date === dateStr).length;
-    if (existingSlots + selectedThatDay >= 2) {
-      setError("1日につき2枠までです");
-      return;
-    }
-
-    // 1週間2枠: 選択数 < 2
-    if (selectedSlots.length >= 2) {
-      setError("1週間（表示の7日以内）に2枠までです");
-      return;
-    }
-
-    setSelectedSlots((prev) => [...prev, key]);
-    setError(null);
+  // 週を移動
+  const moveWeek = (direction: "prev" | "next") => {
+    setWeekStart((prev) => addDays(prev, direction === "next" ? 7 : -7));
   };
 
-  /** 選択枠を一括で予約作成（通常モード時のみ） */
-  const handleConfirmReservations = async () => {
-    if (selectedSlots.length === 0) return;
-    try {
-      setLoading(true);
-      setError(null);
-      for (const s of selectedSlots) {
-        const end = `${(parseInt(s.time.split(":")[0]) + 1).toString().padStart(2, "0")}:00`;
-        await createReservation(userId, s.courtId, s.date, s.time, end);
+  // スロットが予約済みかチェック
+  const isSlotReserved = (date: string, start: string, courtId: string): boolean => {
+    const dateReservations = reservations.get(date) || [];
+    return dateReservations.some(
+      (r) => r.court_id === courtId && r.start_time === start
+    );
+  };
+
+  // スロットが選択済みかチェック
+  const isSlotSelected = (date: string, start: string, courtId: string): boolean => {
+    return selectedSlots.some(
+      (s) => s.date === date && s.start === start && s.courtId === courtId
+    );
+  };
+
+  // 1日の選択枠数をカウント（既存予約＋選択中）
+  const getSelectedCountForDate = (date: string, courtId: string): number => {
+    const dateReservations = reservations.get(date) || [];
+    const existingCount = dateReservations.filter((r) => r.court_id === courtId).length;
+    const selectedCount = selectedSlots.filter(
+      (s) => s.date === date && s.courtId === courtId
+    ).length;
+    return existingCount + selectedCount;
+  };
+
+  // 週全体の選択枠数をカウント
+  const getTotalSelectedCount = (): number => {
+    const weekDates = Array.from({ length: 7 }, (_, i) =>
+      format(addDays(weekStart, i), "yyyy-MM-dd")
+    );
+    return selectedSlots.filter((s) => weekDates.includes(s.date)).length;
+  };
+
+  // スロットをトグル
+  const toggleSlot = (date: string, start: string, end: string, courtId: string) => {
+    if (!isBookableDate(date)) return;
+    if (isSlotReserved(date, start, courtId)) return;
+
+    if (selectionMode) {
+      // 選択モード: 1枠のみ選択可能、再押下で解除
+      const isSelected = isSlotSelected(date, start, courtId);
+      if (isSelected) {
+        setSelectedSlots([]);
+        if (onTimeSelect) {
+          onTimeSelect(null, null, null);
+        }
+      } else {
+        setSelectedSlots([{ date, start, end, courtId }]);
+        if (onTimeSelect) {
+          onTimeSelect(date, start, end);
+        }
       }
+    } else {
+      // 通常モード: 複数選択可能、1日2枠・1週間2枠まで
+      const isSelected = isSlotSelected(date, start, courtId);
+      
+      if (isSelected) {
+        // 選択解除
+        setSelectedSlots((prev) =>
+          prev.filter(
+            (s) => !(s.date === date && s.start === start && s.courtId === courtId)
+          )
+        );
+      } else {
+        // 選択追加
+        const currentDateCount = getSelectedCountForDate(date, courtId);
+        const totalCount = getTotalSelectedCount();
+        
+        if (currentDateCount >= 2) {
+          setError("1日2枠まで予約できます");
+          return;
+        }
+        if (totalCount >= 2) {
+          setError("1週間（表示の7日）で2枠まで予約できます");
+          return;
+        }
+        
+        setError(null);
+        setSelectedSlots((prev) => [...prev, { date, start, end, courtId }]);
+      }
+    }
+  };
+
+  // 予約を確定
+  const handleConfirm = async () => {
+    if (!userId || selectedSlots.length === 0) return;
+
+    try {
+      setSaving(true);
+      setError(null);
+
+      for (const slot of selectedSlots) {
+        await createReservation(
+          userId,
+          slot.courtId,
+          slot.date,
+          slot.start,
+          slot.end
+        );
+      }
+
+      // 予約データを再読み込み
       await loadReservations();
       setSelectedSlots([]);
-    } catch (err: any) {
-      setError(err.message || "予約に失敗しました");
+      
+      // ページをリロードして予約一覧を更新
+      window.location.reload();
+    } catch (error: any) {
+      setError(error.message || "予約の作成に失敗しました");
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
 
-  const isTimeSlotBooked = (date: string, time: string): boolean => {
-    const dateReservations = reservations[date] || [];
-    return dateReservations.some(
-      (r) => r.start_time.substring(0, 5) === time
-    );
-  };
-
-  /** 同一コート・同日のユーザー予約の合計分数（1日2時間制限用） */
-  const getUserBookedMinutesForDate = (date: string): number => {
-    const dateReservations = reservations[date] || [];
-    const userReservations = dateReservations.filter((r) => r.user_id === userId);
-    const toMinutes = (t: string) => {
-      const [h, m] = (t.substring(0, 5) || "0:0").split(":").map(Number);
-      return (h || 0) * 60 + (m || 0);
-    };
-    return userReservations.reduce(
-      (sum, r) => sum + (toMinutes(r.end_time) - toMinutes(r.start_time)),
-      0
-    );
-  };
-
-  const timeSlots = generateTimeSlots();
+  // 週の日付リスト
+  const weekDates = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
 
   return (
-    <div className="card">
+    <div className="space-y-4">
       {/* コート選択 */}
-      {courts.length > 0 && (
-        <div className="mb-6">
+      {courts.length > 0 && !selectionMode && (
+        <div className="card">
           <label className="block text-sm font-medium text-on-background mb-2">
             コート選択
           </label>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             {courts.map((court) => (
               <button
                 key={court.id}
-                onClick={() => {
-                  setSelectedCourt(court.id);
-                  setSelectedDate(null);
-                  setSelectedTime(null);
-                  setSelectedSlots([]); // コート切替時は選択をリセット
-                }}
+                onClick={() => setSelectedCourtId(court.id)}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  selectedCourt === court.id
+                  selectedCourtId === court.id
                     ? "bg-primary text-on-primary"
                     : "bg-surface text-on-background/70 hover:bg-surface/80"
                 }`}
@@ -212,146 +237,163 @@ export default function BookingCalendar({ userId, onTimeSelect, selectionMode = 
         </div>
       )}
 
+      {/* エラー表示 */}
+      {error && (
+        <div className="card bg-highlight/10 border border-highlight text-highlight">
+          {error}
+        </div>
+      )}
+
       {/* 週ナビゲーション */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="card flex items-center justify-between">
         <button
-          onClick={() => {
-            setCurrentWeek(addWeeks(currentWeek, -1));
-            if (!selectionMode) setSelectedSlots([]);
-          }}
-          className="px-4 py-2 rounded-lg hover:bg-surface transition-colors"
+          onClick={() => moveWeek("prev")}
+          className="px-4 py-2 rounded-lg bg-surface text-on-background hover:bg-surface/80"
         >
           ← 前週
         </button>
-        <h3 className="text-lg font-bold text-primary">
-          {format(weekStart, "yyyy年M月d日", { locale: ja })} 〜
-          {format(addDays(weekStart, 6), "M月d日", { locale: ja })}
-        </h3>
+        <div className="text-center">
+          <div className="text-lg font-bold text-primary">
+            {format(weekStart, "yyyy年M月d日", { locale: ja })} 〜{" "}
+            {format(addDays(weekStart, 6), "M月d日", { locale: ja })}
+          </div>
+          {!selectionMode && (
+            <div className="text-sm text-on-background/70 mt-1">
+              選択中: {selectedSlots.length}枠 / 最大2枠
+            </div>
+          )}
+        </div>
         <button
-          onClick={() => {
-            setCurrentWeek(addWeeks(currentWeek, 1));
-            if (!selectionMode) setSelectedSlots([]);
-          }}
-          className="px-4 py-2 rounded-lg hover:bg-surface transition-colors"
+          onClick={() => moveWeek("next")}
+          className="px-4 py-2 rounded-lg bg-surface text-on-background hover:bg-surface/80"
         >
           次週 →
         </button>
       </div>
 
-      {error && (
-        <div className="mb-4 bg-highlight/10 border border-highlight text-highlight px-4 py-3 rounded-lg text-sm">
-          {error}
-        </div>
-      )}
-
       {/* カレンダー */}
-      <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead>
-            <tr>
-              <th className="p-2 text-left text-sm font-medium text-on-background/70">
-                時間
-              </th>
-              {weekDays.map((day) => {
-                const dateStr = format(day, "yyyy-MM-dd");
-                const bookable = isBookableDate(day);
+      {loading ? (
+        <div className="card text-center py-12">
+          <div className="text-on-background/70">読み込み中...</div>
+        </div>
+      ) : (
+        <div className="card overflow-x-auto">
+          <div className="min-w-full">
+            {/* ヘッダー */}
+            <div className="grid grid-cols-8 gap-2 border-b border-outline/20 pb-2 mb-2">
+              <div className="text-sm font-medium text-on-background/70">時間</div>
+              {weekDates.map((date) => {
+                const dateStr = format(date, "yyyy-MM-dd");
+                const isBookable = isBookableDate(dateStr);
                 return (
-                  <th
+                  <div
                     key={dateStr}
-                    className={`p-2 text-center text-sm font-medium ${
-                      bookable ? "text-primary" : "text-outline"
+                    className={`text-center text-sm font-medium ${
+                      isBookable ? "text-primary" : "text-on-background/50"
                     }`}
                   >
-                    <div>{format(day, "M/d", { locale: ja })}</div>
+                    <div>{format(date, "M/d", { locale: ja })}</div>
                     <div className="text-xs">
-                      {format(day, "E", { locale: ja })}
+                      {format(date, "E", { locale: ja })}
                     </div>
-                  </th>
+                  </div>
                 );
               })}
-            </tr>
-          </thead>
-          <tbody>
-            {timeSlots.map((time) => (
-              <tr key={time} className="border-t border-outline/20">
-                <td className="p-2 text-sm text-on-background/70">
-                  {time} - {formatTime(`${(parseInt(time.split(":")[0]) + 1).toString().padStart(2, "0")}:00`)}
-                </td>
-                {weekDays.map((day) => {
-                  const dateStr = format(day, "yyyy-MM-dd");
-                  const bookable = isBookableDate(day);
-                  const booked = isTimeSlotBooked(dateStr, time);
-                  const isSelected = selectionMode
-                    ? selectedDate === dateStr && selectedTime === time
-                    : selectedSlots.some((s) => s.date === dateStr && s.time === time && s.courtId === selectedCourt);
+            </div>
 
-                  return (
-                    <td key={dateStr} className="p-2">
-                      {bookable ? (
+            {/* 時間スロット */}
+            <div className="space-y-2">
+              {timeSlots.map((start) => {
+                const end = `${(parseInt(start.split(":")[0]) + 1)
+                  .toString()
+                  .padStart(2, "0")}:00`;
+                return (
+                  <div key={start} className="grid grid-cols-8 gap-2 items-center">
+                    <div className="text-sm text-on-background/70 flex items-center gap-1">
+                      <Clock className="w-4 h-4" />
+                      {start}
+                    </div>
+                    {weekDates.map((date) => {
+                      const dateStr = format(date, "yyyy-MM-dd");
+                      const isBookable = isBookableDate(dateStr);
+                      const isReserved = isSlotReserved(
+                        dateStr,
+                        start,
+                        selectedCourtId
+                      );
+                      const isSelected = isSlotSelected(
+                        dateStr,
+                        start,
+                        selectedCourtId
+                      );
+
+                      return (
                         <button
-                          onClick={() => handleTimeSlotClick(dateStr, time)}
-                          disabled={booked || loading}
-                          className={`w-full py-2 px-3 rounded-lg text-sm font-medium transition-colors ${
-                            booked
-                              ? "bg-outline/30 text-outline cursor-not-allowed"
+                          key={`${dateStr}-${start}`}
+                          onClick={() =>
+                            toggleSlot(dateStr, start, end, selectedCourtId)
+                          }
+                          disabled={!isBookable || isReserved || !selectedCourtId}
+                          className={`px-2 py-3 rounded-lg text-sm font-medium transition-colors ${
+                            isReserved
+                              ? "bg-outline/20 text-on-background/40 cursor-not-allowed"
                               : isSelected
-                              ? "bg-primary-accent text-white"
-                              : "bg-primary-light/10 text-primary hover:bg-primary-light/20"
+                              ? "bg-primary-accent text-on-primary-accent"
+                              : isBookable
+                              ? "bg-surface text-on-background hover:bg-surface/80"
+                              : "bg-outline/10 text-on-background/30 cursor-not-allowed"
                           }`}
                         >
-                          {booked ? (
-                            <XCircle className="w-4 h-4 mx-auto" />
-                          ) : (
-                            <CheckCircle className="w-4 h-4 mx-auto" />
-                          )}
+                          {isReserved ? "予約済" : isSelected ? "選択中" : isBookable ? "空き" : "-"}
                         </button>
-                      ) : (
-                        <div className="w-full py-2 px-3 rounded-lg bg-surface/50 text-outline text-sm text-center">
-                          -
-                        </div>
-                      )}
-                    </td>
-                  );
-                })}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {/* 予約を確定（通常モード時のみ） */}
-      {!selectionMode && (
-        <div className="mt-6 flex flex-col items-center gap-3">
-          <button
-            onClick={handleConfirmReservations}
-            disabled={selectedSlots.length === 0 || loading}
-            className="btn-primary px-8 py-3 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading ? "予約作成中..." : `予約を確定（${selectedSlots.length}枠）`}
-          </button>
-          {selectedSlots.length > 0 && (
-            <p className="text-sm text-on-background/60">
-              1日2枠・1週間（表示の7日）で2枠まで。選択の解除は枠を再クリックしてください。
-            </p>
-          )}
+                      );
+                    })}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         </div>
       )}
 
-      {/* 凡例 */}
-      <div className="mt-6 flex items-center gap-6 text-sm text-on-background/70">
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 rounded bg-primary-light/10 border border-primary-light"></div>
-          <span>予約可能</span>
+      {/* 予約確定ボタン（通常モードのみ） */}
+      {!selectionMode && selectedSlots.length > 0 && (
+        <div className="card">
+          <div className="mb-4">
+            <h3 className="text-lg font-bold text-primary mb-2">選択中の予約</h3>
+            <div className="space-y-2">
+              {selectedSlots.map((slot, index) => {
+                const court = courts.find((c) => c.id === slot.courtId);
+                return (
+                  <div
+                    key={index}
+                    className="flex items-center justify-between p-3 bg-surface rounded-lg"
+                  >
+                    <div className="flex items-center gap-3">
+                      <Calendar className="w-4 h-4 text-primary" />
+                      <span className="text-sm">
+                        {formatDate(slot.date)} {slot.start} - {slot.end}
+                      </span>
+                      {court && (
+                        <span className="text-xs text-on-background/60">
+                          ({court.display_name})
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+          <button
+            onClick={handleConfirm}
+            disabled={saving || !userId}
+            className="btn-primary w-full"
+          >
+            {saving ? "予約中..." : "予約を確定"}
+          </button>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 rounded bg-outline/30"></div>
-          <span>予約済み</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 rounded bg-surface/50"></div>
-          <span>予約不可</span>
-        </div>
-      </div>
+      )}
     </div>
   );
 }

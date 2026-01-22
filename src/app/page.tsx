@@ -3,7 +3,7 @@
 import { Calendar, Clock, User, LogIn } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Header from "@/components/Header";
-import { VISIT_APPLICATION_NOTICE } from "@/lib/constants";
+import { NOTICE_ITEMS } from "@/lib/constants";
 
 export default function Home() {
   const router = useRouter();
@@ -72,9 +72,17 @@ export default function Home() {
           </div>
         </section>
 
-        {/* 注意書き（来館申請） */}
-        <section className="card mb-6 bg-primary/5 border border-primary/20">
-          <p className="text-primary font-medium">{VISIT_APPLICATION_NOTICE}</p>
+        {/* 注意事項 */}
+        <section className="card mb-6 bg-primary/5 border border-primary/20 text-left">
+          <h3 className="text-lg font-bold text-primary mb-3">注意事項</h3>
+          <ul className="space-y-2 text-on-background/80">
+            {NOTICE_ITEMS.map((item, index) => (
+              <li key={index} className="flex items-start gap-2">
+                <span className="text-primary-accent">・</span>
+                <span>{item}</span>
+              </li>
+            ))}
+          </ul>
         </section>
 
         {/* 利用ルール */}
