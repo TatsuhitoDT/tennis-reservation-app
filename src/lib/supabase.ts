@@ -162,8 +162,10 @@ export async function getReservationsByDate(
   courtId?: string
 ): Promise<Reservation[]> {
   if (!isSupabaseConfigured) return []
+  // カレンダー表示用：全ユーザーの予約を取得するため public_availability VIEW を使用
+  // これにより、RLSポリシーの影響を受けずに予約済みスロットを表示できる
   let query = supabase
-    .from('reservations')
+    .from('public_availability')
     .select('*, court:courts(*)')
     .eq('booking_date', date)
   
@@ -176,7 +178,11 @@ export async function getReservationsByDate(
     console.error('Error fetching reservations by date:', error)
     return []
   }
-  return data || []
+  // public_availability VIEW のデータを Reservation 型に合わせて変換
+  return (data || []).map((r: any) => ({
+    ...r,
+    user_id: '', // public_availability には user_id が含まれない
+  })) as Reservation[]
 }
 
 export async function createReservation(
