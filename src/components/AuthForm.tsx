@@ -89,6 +89,12 @@ export default function AuthForm() {
             errorMessage = "このメールアドレスは既に登録されています。";
           } else if (/already|registered/i.test(errorMessage)) {
             errorMessage = "このメールアドレスは既に登録されています。";
+          } else if (/error.*sending.*confirmation.*email|Error sending confirmation email/i.test(errorMessage)) {
+            errorMessage = "認証メールの送信に失敗しました。Supabaseのメール設定を確認してください。";
+          } else if (/smtp|SMTP/i.test(errorMessage)) {
+            errorMessage = "メールサーバーの設定に問題があります。管理者にお問い合わせください。";
+          } else if (/template|Template/i.test(errorMessage)) {
+            errorMessage = "メールテンプレートの設定に問題があります。Supabaseの設定を確認してください。";
           }
           throw new Error(errorMessage);
         }
@@ -230,10 +236,16 @@ export default function AuthForm() {
         }
         // プロフィールが存在しない場合、通常のエラーメッセージを表示
         errorMessage = "メールアドレスが確認されていません。認証メールを再送信してください。";
+      } else if (/error.*sending.*confirmation.*email|Error sending confirmation email/i.test(errorMessage)) {
+        errorMessage = "認証メールの送信に失敗しました。Supabaseのメール設定を確認してください。";
       } else if (/A user with this email address has already been registered/i.test(errorMessage)) {
         errorMessage = "このメールアドレスは既に登録されています。";
       } else if (/already been registered|already registered/i.test(errorMessage)) {
         errorMessage = "このメールアドレスは既に登録されています。";
+      } else if (/smtp|SMTP/i.test(errorMessage)) {
+        errorMessage = "メールサーバーの設定に問題があります。管理者にお問い合わせください。";
+      } else if (/template|Template/i.test(errorMessage)) {
+        errorMessage = "メールテンプレートの設定に問題があります。Supabaseの設定を確認してください。";
       }
       setError(errorMessage);
     } finally {
@@ -290,13 +302,22 @@ export default function AuthForm() {
       console.error("[認証メール再送信] 例外:", err);
       // エラーメッセージを日本語に変換
       let errorMessage = err?.message || "認証メールの再送信に失敗しました";
-      if (/email.*not.*found|Email not found/i.test(errorMessage)) {
+      
+      // 英語のエラーメッセージを日本語に変換
+      if (/error.*sending.*confirmation.*email|Error sending confirmation email/i.test(errorMessage)) {
+        errorMessage = "認証メールの送信に失敗しました。Supabaseのメール設定を確認してください。";
+      } else if (/email.*not.*found|Email not found/i.test(errorMessage)) {
         errorMessage = "このメールアドレスは登録されていません。新規登録を行ってください。";
       } else if (/rate.*limit|too many requests/i.test(errorMessage)) {
         errorMessage = "送信回数が多すぎます。しばらく待ってから再度お試しください。";
       } else if (/email.*disabled|Email disabled/i.test(errorMessage)) {
         errorMessage = "メール送信機能が無効になっています。管理者にお問い合わせください。";
+      } else if (/smtp|SMTP/i.test(errorMessage)) {
+        errorMessage = "メールサーバーの設定に問題があります。管理者にお問い合わせください。";
+      } else if (/template|Template/i.test(errorMessage)) {
+        errorMessage = "メールテンプレートの設定に問題があります。Supabaseの設定を確認してください。";
       }
+      
       setError(errorMessage);
     } finally {
       setResendingConfirmation(false);
