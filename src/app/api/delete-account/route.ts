@@ -52,8 +52,7 @@ export async function POST(request: NextRequest) {
     if (serviceRoleKey) {
       console.log(`[アカウント削除] サービスロールキーが設定されています。ユーザー ${user.id} を完全に削除します。`)
       
-      // Admin APIを使用してユーザーを完全に削除
-      // auth.usersを削除すると、CASCADEでprofilesとreservationsも自動削除される
+      // Admin APIクライアントを作成
       const adminClient = createClient(supabaseUrl, serviceRoleKey, {
         auth: {
           autoRefreshToken: false,
@@ -61,12 +60,56 @@ export async function POST(request: NextRequest) {
         }
       })
       
-      const { error: deleteError } = await adminClient.auth.admin.deleteUser(user.id)
+      // まず、関連データ（reservations、profiles）を削除
+      // これにより、auth.users削除時の制約エラーを回避
+      console.log(`[アカウント削除] 関連データを削除中...`)
+      
+      // 予約を削除
+      const { error: reservationError, data: deletedReservations } = await adminClient
+        .from('reservations')
+        .delete()
+        .eq('user_id', user.id)
+        .select()
+      
+      if (reservationError) {
+        console.error('[アカウント削除] 予約削除エラー:', reservationError)
+        // 予約削除エラーは警告として記録するが、続行
+        console.warn(`[アカウント削除] 予約削除でエラーが発生しましたが、続行します: ${reservationError.message}`)
+      } else {
+        console.log(`[アカウント削除] 予約データを削除しました（削除数: ${deletedReservations?.length || 0}）`)
+      }
+      
+      // プロフィールを削除
+      const { error: profileError, data: deletedProfiles } = await adminClient
+        .from('profiles')
+        .delete()
+        .eq('id', user.id)
+        .select()
+      
+      if (profileError) {
+        console.error('[アカウント削除] プロフィール削除エラー:', profileError)
+        // プロフィール削除エラーは警告として記録するが、続行
+        console.warn(`[アカウント削除] プロフィール削除でエラーが発生しましたが、続行します: ${profileError.message}`)
+      } else {
+        console.log(`[アカウント削除] プロフィールデータを削除しました（削除数: ${deletedProfiles?.length || 0}）`)
+      }
+      
+      // 最後に、auth.usersを削除
+      console.log(`[アカウント削除] auth.usersを削除中...`)
+      const { error: deleteError, data: deleteData } = await adminClient.auth.admin.deleteUser(user.id)
       
       if (deleteError) {
-        console.error('[アカウント削除] ユーザー削除エラー:', deleteError)
+        console.error('[アカウント削除] ユーザー削除エラー詳細:', {
+          message: deleteError.message,
+          status: deleteError.status,
+          name: deleteError.name,
+          error: deleteError
+        })
         return NextResponse.json(
-          { error: `アカウントの削除に失敗しました: ${deleteError.message}` },
+          { 
+            error: `アカウントの削除に失敗しました: ${deleteError.message}`,
+            details: deleteError.status ? `ステータス: ${deleteError.status}` : undefined
+          },
           { status: 500 }
         )
       }
