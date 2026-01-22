@@ -28,34 +28,41 @@ export default function ProfilePage() {
   const [emailChangeSent, setEmailChangeSent] = useState(false);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (!session) {
         router.push("/login");
       } else {
         setUser(session.user);
-        loadProfile(session.user.id);
-      }
-    });
-    
-    // メールアドレス変更確認後の処理
-    if (typeof window !== "undefined") {
-      const hash = window.location.hash?.replace("#", "") || "";
-      if (hash) {
-        const params = new URLSearchParams(hash);
-        const type = params.get("type");
-        if (type === "email_change") {
-          // メールアドレス変更が完了したことを示すメッセージ
-          setMessage("メールアドレスが正常に変更されました。");
-          // URLからハッシュを削除
-          window.history.replaceState(null, "", window.location.pathname + window.location.search);
-          // プロフィールを再読み込み
-          if (user) {
-            loadProfile(user.id);
+        await loadProfile(session.user.id);
+        
+        // メールアドレス変更確認後の処理
+        if (typeof window !== "undefined") {
+          const hash = window.location.hash?.replace("#", "") || "";
+          if (hash) {
+            const params = new URLSearchParams(hash);
+            const type = params.get("type");
+            if (type === "email_change") {
+              // メールアドレス変更が完了した場合、profilesテーブルも更新
+              try {
+                const { updateProfile } = await import("@/lib/supabase");
+                await updateProfile(session.user.id, {
+                  email: session.user.email || "",
+                });
+                setMessage("メールアドレスが正常に変更されました。");
+                // URLからハッシュを削除
+                window.history.replaceState(null, "", window.location.pathname + window.location.search);
+                // プロフィールを再読み込み
+                await loadProfile(session.user.id);
+              } catch (error) {
+                console.error("Failed to update profile email:", error);
+                setError("メールアドレスの更新に失敗しました");
+              }
+            }
           }
         }
       }
-    }
-  }, [router, user]);
+    });
+  }, [router]);
 
   const loadProfile = async (userId: string) => {
     try {
@@ -109,27 +116,6 @@ export default function ProfilePage() {
     }
   };
 
-  // メールアドレス変更後のプロフィール更新
-  useEffect(() => {
-    const checkEmailChange = async () => {
-      if (user) {
-        const { data: { user: currentUser } } = await supabase.auth.getUser();
-        if (currentUser && currentUser.email && profile && currentUser.email !== profile.email) {
-          // メールアドレスが変更された場合、profilesテーブルも更新
-          try {
-            const { updateProfile } = await import("@/lib/supabase");
-            await updateProfile(user.id, {
-              email: currentUser.email,
-            });
-            await loadProfile(user.id);
-          } catch (error) {
-            console.error("Failed to update profile email:", error);
-          }
-        }
-      }
-    };
-    checkEmailChange();
-  }, [user, profile]);
 
   const handleDeleteAccount = async () => {
     if (!user) return;
