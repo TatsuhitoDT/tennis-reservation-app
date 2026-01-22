@@ -233,8 +233,9 @@ export default function AuthForm() {
   };
 
   // 認証メールを再送信
-  const handleResendConfirmation = async () => {
-    if (!emailNotConfirmed) return;
+  const handleResendConfirmation = async (emailToResend?: string) => {
+    const targetEmail = emailToResend || emailNotConfirmed;
+    if (!targetEmail) return;
 
     setResendingConfirmation(true);
     setError(null);
@@ -247,9 +248,10 @@ export default function AuthForm() {
           : (typeof window !== "undefined" ? window.location.origin : "") + "/login";
       
       // Supabaseのresendメソッドを使用して認証メールを再送信
+      // このメソッドは即座にメール送信リクエストをSupabaseに送信します
       const { data, error: resendError } = await supabase.auth.resend({
         type: 'signup',
-        email: emailNotConfirmed,
+        email: targetEmail,
         options: {
           emailRedirectTo: redirectTo,
         },
@@ -259,8 +261,12 @@ export default function AuthForm() {
         throw resendError;
       }
 
-      setMessage("認証メールを再送信しました。メールボックスをご確認ください。");
-      setEmailNotConfirmed(null);
+      // メール送信リクエストは成功しました
+      // メールは通常数秒〜数分以内に届きます
+      setMessage("認証メールを送信しました。通常、数秒〜数分以内にメールが届きます。メールボックス（迷惑メールフォルダも含む）をご確認ください。");
+      if (emailNotConfirmed) {
+        setEmailNotConfirmed(null);
+      }
     } catch (err: any) {
       // エラーメッセージを日本語に変換
       let errorMessage = err?.message || "認証メールの再送信に失敗しました";
@@ -507,9 +513,8 @@ export default function AuthForm() {
                 <button
                   type="button"
                   onClick={async () => {
-                    setEmailNotConfirmed(email);
                     setError(null);
-                    await handleResendConfirmation();
+                    await handleResendConfirmation(email);
                   }}
                   disabled={resendingConfirmation}
                   className="btn-primary text-sm mt-2"
