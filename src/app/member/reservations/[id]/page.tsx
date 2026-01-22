@@ -33,6 +33,10 @@ export default function ReservationDetailPage() {
       setLoading(true);
       const { getReservationById } = await import("@/lib/supabase");
       const data = await getReservationById(reservationId);
+      if (!data) {
+        setError("予約が見つかりません");
+        return;
+      }
       setReservation(data);
       setSelectedDate(data.booking_date);
       setSelectedCourtId(data.court_id);
