@@ -59,6 +59,7 @@ export default function AuthForm() {
         const isAlreadyRegistered =
           (signUpError?.message && /already|registered|既に登録/i.test(signUpError.message)) ||
           (signUpError?.message && /Email address .+ is invalid/i.test(signUpError.message)) ||
+          (signUpError?.message && /A user with this email address has already been registered/i.test(signUpError.message)) ||
           (data?.user && (!data.user.identities || data.user.identities.length === 0));
 
         if (isAlreadyRegistered) {
@@ -69,7 +70,16 @@ export default function AuthForm() {
           return;
         }
 
-        if (signUpError) throw signUpError;
+        if (signUpError) {
+          // エラーメッセージを日本語に変換
+          let errorMessage = signUpError.message;
+          if (/A user with this email address has already been registered/i.test(errorMessage)) {
+            errorMessage = "このメールアドレスは既に登録されています。";
+          } else if (/already|registered/i.test(errorMessage)) {
+            errorMessage = "このメールアドレスは既に登録されています。";
+          }
+          throw new Error(errorMessage);
+        }
 
         if (data.user) {
           // プロフィールが作成されているか確認し、なければ作成
@@ -168,7 +178,14 @@ export default function AuthForm() {
         window.location.href = "/dashboard";
       }
     } catch (err: any) {
-      setError(err?.message || "エラーが発生しました");
+      // エラーメッセージを日本語に変換
+      let errorMessage = err?.message || "エラーが発生しました";
+      if (/A user with this email address has already been registered/i.test(errorMessage)) {
+        errorMessage = "このメールアドレスは既に登録されています。";
+      } else if (/already been registered|already registered/i.test(errorMessage)) {
+        errorMessage = "このメールアドレスは既に登録されています。";
+      }
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
