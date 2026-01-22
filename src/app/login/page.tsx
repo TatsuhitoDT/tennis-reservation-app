@@ -62,7 +62,19 @@ export default function LoginPage() {
       supabase.auth
         .setSession({ access_token, refresh_token })
         .then(async () => {
-          // セッション設定後、プロフィールページへリダイレクト
+          // セッション設定後、profilesテーブルのemailも更新
+          try {
+            const { data: { user: currentUser } } = await supabase.auth.getUser();
+            if (currentUser && currentUser.email) {
+              const { updateProfile } = await import("@/lib/supabase");
+              await updateProfile(currentUser.id, {
+                email: currentUser.email,
+              });
+            }
+          } catch (err) {
+            console.error("Failed to update profile email:", err);
+          }
+          // プロフィールページへリダイレクト
           window.history.replaceState(null, "", window.location.pathname + window.location.search);
           router.push("/member/profile");
         })
