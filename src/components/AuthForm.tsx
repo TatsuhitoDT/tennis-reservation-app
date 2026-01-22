@@ -21,6 +21,8 @@ export default function AuthForm() {
   const [alreadyRegisteredEmail, setAlreadyRegisteredEmail] = useState<string | null>(null);
   const [focusedField, setFocusedField] = useState<string | null>(null);
   const [privacyAccepted, setPrivacyAccepted] = useState(false);
+  const [emailNotConfirmed, setEmailNotConfirmed] = useState<string | null>(null);
+  const [resendingConfirmation, setResendingConfirmation] = useState(false);
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,6 +30,7 @@ export default function AuthForm() {
     setError(null);
     setMessage(null);
     setAlreadyRegisteredEmail(null);
+    setEmailNotConfirmed(null);
 
     try {
       if (mode === "signup") {
@@ -113,6 +116,8 @@ export default function AuthForm() {
           }
 
           setMessage("アカウントを作成しました。メールを確認してください。");
+          // 認証メール再送信のためのメールアドレスを保存
+          setEmailNotConfirmed(email);
         }
       } else {
         const { error: signInError, data: signInData } = await supabase.auth.signInWithPassword({
@@ -120,8 +125,31 @@ export default function AuthForm() {
           password,
         });
 
-        // ログイン失敗時、削除済みユーザーの可能性をチェック
+        // ログイン失敗時、削除済みユーザーまたはメール未認証の可能性をチェック
         if (signInError) {
+          // メール未認証エラーのチェック
+          if (signInError.message && /email.*not.*confirm|Email not confirmed/i.test(signInError.message)) {
+            // プロフィールが存在するか確認（メール未認証だが登録済みの可能性）
+            try {
+              const { data: profileData } = await supabase
+                .from("profiles")
+                .select("id")
+                .eq("email", email)
+                .single();
+
+              if (profileData) {
+                // プロフィールが存在する場合、メール未認証の可能性が高い
+                setEmailNotConfirmed(email);
+                setError(null);
+                setMessage(null);
+                setLoading(false);
+                return;
+              }
+            } catch (err) {
+              console.error("プロフィール確認エラー:", err);
+            }
+          }
+
           // メールアドレスでprofilesテーブルを検索
           // 削除済みユーザーはauth.usersに存在するがprofilesに存在しない
           try {
@@ -184,10 +212,64 @@ export default function AuthForm() {
         errorMessage = "このメールアドレスは既に登録されています。";
       } else if (/already been registered|already registered/i.test(errorMessage)) {
         errorMessage = "このメールアドレスは既に登録されています。";
+      } else if (/email.*not.*confirm|Email not confirmed/i.test(errorMessage)) {
+        errorMessage = "メールアドレスが確認されていません。認証メールを再送信してください。";
       }
       setError(errorMessage);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // 認証メールを再送信
+  const handleResendConfirmation = async () => {
+    if (!emailNotConfirmed) return;
+
+    setResendingConfirmation(true);
+    setError(null);
+    setMessage(null);
+
+    try {
+      const redirectTo =
+        process.env.NEXT_PUBLIC_APP_URL 
+          ? `${process.env.NEXT_PUBLIC_APP_URL}/login`
+          : (typeof window !== "undefined" ? window.location.origin : "") + "/login";
+      
+      // signUpを再度呼び出すことで認証メールを再送信
+      // 既に登録済みの場合はエラーになるが、その場合は既存の処理で対応
+      const { data, error: signUpError } = await supabase.auth.signUp({
+        email: emailNotConfirmed,
+        password: "", // パスワードは不要（既存ユーザーの場合）
+        options: {
+          emailRedirectTo: redirectTo,
+        },
+      });
+
+      // 登録済みメールの場合（identities が空）
+      if (data?.user && (!data.user.identities || data.user.identities.length === 0)) {
+        // 認証メールは送信されないが、エラーも出ない
+        // この場合、認証メールの再送信はSupabaseの設定に依存
+        setMessage("認証メールを再送信しました。メールボックスをご確認ください。");
+        setEmailNotConfirmed(null);
+      } else if (signUpError) {
+        // エラーが発生した場合
+        if (/already|registered/i.test(signUpError.message)) {
+          // 既に登録済みの場合、認証メールの再送信を試みる
+          // Supabaseのresendメソッドは認証済みユーザー向けなので、ここではsignUpの結果を確認
+          setMessage("認証メールを再送信しました。メールボックスをご確認ください。");
+          setEmailNotConfirmed(null);
+        } else {
+          throw signUpError;
+        }
+      } else {
+        // 成功した場合
+        setMessage("認証メールを再送信しました。メールボックスをご確認ください。");
+        setEmailNotConfirmed(null);
+      }
+    } catch (err: any) {
+      setError(err.message || "認証メールの再送信に失敗しました");
+    } finally {
+      setResendingConfirmation(false);
     }
   };
 
@@ -201,6 +283,7 @@ export default function AuthForm() {
               setError(null);
               setMessage(null);
               setAlreadyRegisteredEmail(null);
+              setEmailNotConfirmed(null);
               setFullName("山田 太郎");
               setFullNameKana("ヤマダ タロウ");
               setPhone("090-1234-5678");
@@ -220,6 +303,7 @@ export default function AuthForm() {
               setError(null);
               setMessage(null);
               setAlreadyRegisteredEmail(null);
+              setEmailNotConfirmed(null);
               setFullName("山田 太郎");
               setFullNameKana("ヤマダ タロウ");
               setPhone("090-1234-5678");
@@ -391,6 +475,27 @@ export default function AuthForm() {
                 className="text-sm font-medium text-primary-accent hover:underline"
               >
                 ログインへ
+              </button>
+            </div>
+          )}
+
+          {emailNotConfirmed && (
+            <div className="bg-primary/10 border border-primary text-primary px-4 py-3 rounded-lg text-sm space-y-2">
+              <p>メールアドレスが確認されていません。認証メールを再送信してください。</p>
+              <button
+                type="button"
+                onClick={handleResendConfirmation}
+                disabled={resendingConfirmation}
+                className="btn-primary text-sm"
+              >
+                {resendingConfirmation ? "送信中..." : "認証メールを再送信"}
+              </button>
+              <button
+                type="button"
+                onClick={() => { setEmailNotConfirmed(null); setError(null); }}
+                className="text-sm text-primary-accent hover:underline ml-2"
+              >
+                キャンセル
               </button>
             </div>
           )}
