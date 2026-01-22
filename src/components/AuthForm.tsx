@@ -108,6 +108,30 @@ export default function AuthForm() {
 
         if (signInError) throw signInError;
 
+        // ログイン成功後、プロフィールの存在確認
+        try {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user) {
+            const { data: profileData, error: profileError } = await supabase
+              .from("profiles")
+              .select("id")
+              .eq("id", user.id)
+              .single();
+
+            // プロフィールが存在しない場合（削除済みユーザー）
+            if (profileError || !profileData) {
+              // ログアウト
+              await supabase.auth.signOut();
+              setError("このアカウントは登録が完了していません。新規登録を行ってください。");
+              setLoading(false);
+              return;
+            }
+          }
+        } catch (err) {
+          console.error("プロフィール確認エラー:", err);
+          // エラーがあっても続行（通常のログインフロー）
+        }
+
         // ログイン成功時はページをリロードしてダッシュボードへ
         window.location.href = "/dashboard";
       }

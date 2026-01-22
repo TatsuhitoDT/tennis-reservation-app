@@ -6,18 +6,25 @@ import { supabase } from "@/lib/supabase";
 import Header from "@/components/Header";
 import BookingCalendar from "@/components/BookingCalendar";
 import { NOTICE_ITEMS } from "@/lib/constants";
+import Link from "next/link";
+import { AlertCircle } from "lucide-react";
 
 export default function DashboardPage() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
+  const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (!session) {
         router.push("/login");
       } else {
         setUser(session.user);
+        // プロフィールの存在確認
+        const { getProfile } = await import("@/lib/supabase");
+        const profileData = await getProfile(session.user.id);
+        setProfile(profileData);
         setLoading(false);
       }
     });
@@ -27,6 +34,41 @@ export default function DashboardPage() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-on-background/70">読み込み中...</div>
+      </div>
+    );
+  }
+
+  // プロフィールが存在しない場合（削除済みユーザー）
+  if (!profile) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <main className="max-w-6xl mx-auto px-6 py-8">
+          <div className="card max-w-2xl mx-auto">
+            <div className="flex items-start gap-4 p-4 rounded-lg bg-highlight/10 border border-highlight">
+              <AlertCircle className="w-6 h-6 text-highlight flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <h3 className="text-lg font-bold text-highlight mb-2">
+                  ユーザー登録が必要です
+                </h3>
+                <p className="text-on-background mb-4">
+                  このアカウントは登録が完了していません。予約を行うには、ユーザー登録が必要です。
+                </p>
+                <div className="flex gap-3">
+                  <Link
+                    href="/login"
+                    className="btn-primary"
+                    onClick={async () => {
+                      await supabase.auth.signOut();
+                    }}
+                  >
+                    新規登録へ
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </div>
+        </main>
       </div>
     );
   }

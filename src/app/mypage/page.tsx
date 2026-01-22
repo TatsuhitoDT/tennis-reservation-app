@@ -6,7 +6,7 @@ import { supabase } from "@/lib/supabase";
 import { getAllUserReservations, type Reservation, type Profile } from "@/lib/supabase";
 import Header from "@/components/Header";
 import { formatDate, formatTime } from "@/lib/dateUtils";
-import { User, Calendar, Clock, Edit, Save, Phone, Mail, Trash2 } from "lucide-react";
+import { User, Calendar, Clock, Edit, Save, Phone, Mail, Trash2, AlertTriangle } from "lucide-react";
 
 type TabType = "profile" | "reservations";
 
@@ -56,9 +56,12 @@ export default function MyPage() {
           full_name_kana: "",
           phone: "",
         });
+        // プロフィールが存在しない場合、ローディングを終了
+        setLoading(false);
       }
     } catch (error) {
       console.error("Failed to load profile:", error);
+      setLoading(false);
     }
   };
 
@@ -128,6 +131,41 @@ export default function MyPage() {
         <Header />
         <main className="max-w-4xl mx-auto px-6 py-8">
           <div className="text-center text-on-background/70">読み込み中...</div>
+        </main>
+      </div>
+    );
+  }
+
+  // プロフィールが存在しない場合（削除済みユーザー）
+  if (!profile) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <main className="max-w-4xl mx-auto px-6 py-8">
+          <div className="card max-w-2xl mx-auto">
+            <div className="flex items-start gap-4 p-4 rounded-lg bg-highlight/10 border border-highlight">
+              <AlertTriangle className="w-6 h-6 text-highlight flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <h3 className="text-lg font-bold text-highlight mb-2">
+                  ユーザー登録が必要です
+                </h3>
+                <p className="text-on-background mb-4">
+                  このアカウントは登録が完了していません。予約を行うには、ユーザー登録が必要です。
+                </p>
+                <div className="flex gap-3">
+                  <button
+                    onClick={async () => {
+                      await supabase.auth.signOut();
+                      router.push("/login");
+                    }}
+                    className="btn-primary"
+                  >
+                    新規登録へ
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
         </main>
       </div>
     );
