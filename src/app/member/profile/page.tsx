@@ -94,6 +94,11 @@ export default function ProfilePage() {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
+    
+    // メールアドレス変更中は保存をスキップ
+    if (changingEmail || emailChangeSent) {
+      return;
+    }
 
     setSaving(true);
     setError(null);
