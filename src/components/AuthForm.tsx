@@ -36,8 +36,12 @@ export default function AuthForm() {
           setLoading(false);
           return;
         }
+        // メール確認後のリダイレクト先
+        // SupabaseのRedirect URLsに設定されている必要がある
         const redirectTo =
-          (typeof window !== "undefined" ? window.location.origin : "") + "/login";
+          process.env.NEXT_PUBLIC_APP_URL 
+            ? `${process.env.NEXT_PUBLIC_APP_URL}/login`
+            : (typeof window !== "undefined" ? window.location.origin : "") + "/login";
         const { data, error: signUpError } = await supabase.auth.signUp({
           email,
           password,

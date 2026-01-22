@@ -13,7 +13,7 @@ export default function LoginPage() {
   const [setPasswordError, setSetPasswordError] = useState<string | null>(null);
   const [recovering, setRecovering] = useState(false);
 
-  // パスワードリセットメールのリンクから戻ってきた場合: hash の type=recovery を処理
+  // メール確認・パスワードリセットメールのリンクから戻ってきた場合を処理
   useEffect(() => {
     if (typeof window === "undefined") return;
     const hash = window.location.hash?.replace("#", "") || "";
@@ -22,6 +22,8 @@ export default function LoginPage() {
     const type = params.get("type");
     const access_token = params.get("access_token");
     const refresh_token = params.get("refresh_token");
+    
+    // パスワードリセット（type=recovery）
     if (type === "recovery" && access_token && refresh_token) {
       setRecovering(true);
       supabase.auth
@@ -36,7 +38,24 @@ export default function LoginPage() {
           setRecovering(false);
         });
     }
-  }, []);
+    
+    // メール確認（type=signup）
+    if (type === "signup" && access_token && refresh_token) {
+      setRecovering(true);
+      supabase.auth
+        .setSession({ access_token, refresh_token })
+        .then(async () => {
+          // セッション設定後、ダッシュボードへリダイレクト
+          window.history.replaceState(null, "", window.location.pathname + window.location.search);
+          router.push("/dashboard");
+        })
+        .catch((err: unknown) => {
+          console.error("signup setSession:", err);
+          setSetPasswordError("メール確認に失敗しました。リンクの有効期限が切れている可能性があります。");
+          setRecovering(false);
+        });
+    }
+  }, [router]);
 
   // 既にログインしており、パスワード設定不要な場合はダッシュボードへ（recovery 処理中は待機）
   useEffect(() => {
